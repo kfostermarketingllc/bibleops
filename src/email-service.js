@@ -13,18 +13,11 @@ const mailchimp = require('@mailchimp/mailchimp_transactional')(process.env.MAIL
  * @param {Array} params.pdfs - Array of PDF file objects {name, path, buffer}
  * @returns {Promise} - Mailchimp response
  */
-async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [] }) {
+async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [], baseUrl = 'https://bibleops.onrender.com' }) {
     try {
         console.log(`📧 Sending curriculum email to: ${toEmail}`);
 
         const studyFocus = passage || theme || 'Bible Study';
-
-        // Prepare attachments
-        const attachments = pdfs.map(pdf => ({
-            type: 'application/pdf',
-            name: pdf.name,
-            content: pdf.buffer.toString('base64')
-        }));
 
         // Create HTML email content
         const htmlContent = `
@@ -111,27 +104,29 @@ async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [] }) {
     <div class="content">
         <h2>Your Bible Study Curriculum is Ready!</h2>
 
-        <p>Thank you for using BibleOps. Your comprehensive Bible study curriculum for <strong>${studyFocus}</strong> has been generated and is attached to this email.</p>
+        <p>Thank you for using BibleOps. Your comprehensive Bible study curriculum for <strong>${studyFocus}</strong> has been generated and is ready to download.</p>
 
         <div class="highlight">
             <p><strong>📖 Study Focus:</strong> ${studyFocus}</p>
             <p><strong>📦 Included Materials:</strong> ${pdfs.length} specialized study guides</p>
-            <p><strong>⏱️ Generation Time:</strong> Completed by 11 AI agents</p>
+            <p><strong>⏱️ Generation:</strong> Powered by advanced AI technology</p>
         </div>
 
-        <h3>Your Curriculum Includes:</h3>
+        <h3>Download Your Curriculum:</h3>
         <ul class="pdf-list">
             ${pdfs.map(pdf => `
                 <li class="pdf-item">
                     <span class="pdf-icon">📄</span>
-                    <strong>${pdf.name}</strong>
+                    <a href="${baseUrl}${pdf.path}" style="color: #2c5282; text-decoration: none; font-weight: 600;">
+                        ${pdf.title}
+                    </a>
                 </li>
             `).join('')}
         </ul>
 
         <h3>How to Use These Materials:</h3>
         <ol>
-            <li><strong>Download All PDFs:</strong> Save the attached files to your computer</li>
+            <li><strong>Download PDFs:</strong> Click the links above to download each guide</li>
             <li><strong>Review the Overview:</strong> Start with the Foundational Materials guide</li>
             <li><strong>Prepare Your Teaching:</strong> Use the specialized guides for deep study</li>
             <li><strong>Engage Your Group:</strong> Utilize discussion questions and activities</li>
@@ -148,7 +143,7 @@ async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [] }) {
 
     <div class="footer">
         <p><strong>BibleOps</strong> - Comprehensive curriculum creation with precision and theological care</p>
-        <p>Powered by 11 Specialized AI Agents</p>
+        <p>Powered by Advanced AI Technology</p>
         <p style="margin-top: 15px; font-size: 0.75rem;">
             Built on proven methodologies from Gordon Fee, Douglas Stuart, Rick Warren, Jen Wilkin, and more
         </p>
@@ -171,11 +166,11 @@ Thank you for using BibleOps. Your comprehensive Bible study curriculum for ${st
 Study Focus: ${studyFocus}
 Included Materials: ${pdfs.length} specialized study guides
 
-Your curriculum includes:
-${pdfs.map((pdf, i) => `${i + 1}. ${pdf.name}`).join('\n')}
+Download Your Curriculum:
+${pdfs.map((pdf, i) => `${i + 1}. ${pdf.title}: ${baseUrl}${pdf.path}`).join('\n')}
 
 How to Use These Materials:
-1. Download All PDFs: Save the attached files to your computer
+1. Download PDFs: Click the links above to download each guide
 2. Review the Overview: Start with the Foundational Materials guide
 3. Prepare Your Teaching: Use the specialized guides for deep study
 4. Engage Your Group: Utilize discussion questions and activities
@@ -184,7 +179,7 @@ Build another study at: https://bibleops.com
 
 ---
 BibleOps - Comprehensive curriculum creation with precision and theological care
-Powered by 11 Specialized AI Agents
+Powered by Advanced AI Technology
 bibleops.com
         `;
 
@@ -192,7 +187,7 @@ bibleops.com
         const message = {
             from_email: process.env.MAILCHIMP_FROM_EMAIL || 'noreply@bibleops.com',
             from_name: process.env.MAILCHIMP_FROM_NAME || 'BibleOps',
-            subject: `Your ${studyFocus} Bible Study Curriculum - Ready to Use`,
+            subject: `Your ${studyFocus} Bible Study Curriculum - Ready to Download`,
             text: textContent,
             html: htmlContent,
             to: [
@@ -201,7 +196,6 @@ bibleops.com
                     type: 'to'
                 }
             ],
-            attachments: attachments,
             tags: ['bible-study', 'curriculum'],
             metadata: {
                 study_focus: studyFocus,

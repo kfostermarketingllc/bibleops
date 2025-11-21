@@ -412,15 +412,15 @@ small {
     margin: var(--spacing-md) 0;
 }
 
-/* Agent Status */
-.agent-status {
+/* Component Status */
+.component-status {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--spacing-sm);
     margin-top: var(--spacing-lg);
 }
 
-.agent-item {
+.component-item {
     padding: 12px 16px;
     border-radius: 3px;
     font-family: var(--font-sans);
@@ -432,25 +432,25 @@ small {
     background: white;
 }
 
-.agent-item.pending {
+.component-item.pending {
     border-color: var(--light-gray);
     color: var(--medium-gray);
 }
 
-.agent-item.in-progress {
+.component-item.in-progress {
     background: rgba(44, 82, 130, 0.05);
     border-color: var(--accent-blue);
     color: var(--navy);
     font-weight: 500;
 }
 
-.agent-item.complete {
+.component-item.completed {
     background: rgba(72, 187, 120, 0.05);
     border-color: #48bb78;
     color: #2f855a;
 }
 
-.agent-icon {
+.component-icon {
     font-size: 1.2rem;
 }
 

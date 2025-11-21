@@ -9,8 +9,8 @@ const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:3001/api'
     : 'https://bibleops.onrender.com/api';
 
-// Agent names for progress tracking
-const AGENTS = [
+// Component names for progress tracking
+const COMPONENTS = [
     { name: 'Foundational Materials & Reference', icon: '📚' },
     { name: 'Bible Translation', icon: '📖' },
     { name: 'Denominational Theology', icon: '✝️' },
@@ -191,53 +191,53 @@ async function generateCurriculum(formData) {
 function simulateProgress() {
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
-    const agentStatus = document.getElementById('agentStatus');
+    const componentStatus = document.getElementById('componentStatus');
 
-    // Create agent status items
-    agentStatus.innerHTML = AGENTS.map((agent, index) => `
-        <div class="agent-item pending" id="agent-${index}">
-            <span>${agent.icon}</span>
-            <span>${agent.name}</span>
+    // Create component status items
+    componentStatus.innerHTML = COMPONENTS.map((component, index) => `
+        <div class="component-item pending" id="component-${index}">
+            <span>${component.icon}</span>
+            <span>${component.name}</span>
         </div>
     `).join('');
 
-    let currentAgent = 0;
-    const totalAgents = AGENTS.length;
-    const estimatedTimePerAgent = 30; // seconds
+    let currentComponent = 0;
+    const totalComponents = COMPONENTS.length;
+    const estimatedTimePerComponent = 10; // seconds (faster with parallel execution)
 
     const interval = setInterval(() => {
-        if (currentAgent < totalAgents) {
+        if (currentComponent < totalComponents) {
             // Update progress bar
-            const progress = ((currentAgent + 1) / totalAgents) * 100;
+            const progress = ((currentComponent + 1) / totalComponents) * 100;
             progressBar.style.width = `${progress}%`;
 
             // Update progress text
-            progressText.textContent = `Processing Agent ${currentAgent + 1} of ${totalAgents}: ${AGENTS[currentAgent].name}...`;
+            progressText.textContent = `Processing ${currentComponent + 1} of ${totalComponents}: ${COMPONENTS[currentComponent].name}...`;
 
-            // Update agent status
-            if (currentAgent > 0) {
-                const prevAgent = document.getElementById(`agent-${currentAgent - 1}`);
-                prevAgent.classList.remove('in-progress');
-                prevAgent.classList.add('completed');
+            // Update component status
+            if (currentComponent > 0) {
+                const prevComponent = document.getElementById(`component-${currentComponent - 1}`);
+                prevComponent.classList.remove('in-progress');
+                prevComponent.classList.add('completed');
             }
 
-            const currentAgentEl = document.getElementById(`agent-${currentAgent}`);
-            currentAgentEl.classList.remove('pending');
-            currentAgentEl.classList.add('in-progress');
+            const currentComponentEl = document.getElementById(`component-${currentComponent}`);
+            currentComponentEl.classList.remove('pending');
+            currentComponentEl.classList.add('in-progress');
 
-            currentAgent++;
+            currentComponent++;
 
-            // If last agent, mark as completed
-            if (currentAgent === totalAgents) {
+            // If last component, mark as completed
+            if (currentComponent === totalComponents) {
                 setTimeout(() => {
-                    const lastAgent = document.getElementById(`agent-${currentAgent - 1}`);
-                    lastAgent.classList.remove('in-progress');
-                    lastAgent.classList.add('completed');
+                    const lastComponent = document.getElementById(`component-${currentComponent - 1}`);
+                    lastComponent.classList.remove('in-progress');
+                    lastComponent.classList.add('completed');
                     progressText.textContent = 'Finalizing curriculum...';
-                }, estimatedTimePerAgent * 500);
+                }, estimatedTimePerComponent * 500);
             }
         }
-    }, estimatedTimePerAgent * 1000);
+    }, estimatedTimePerComponent * 1000);
 
     // Store interval ID for potential cleanup
     window.progressInterval = interval;
@@ -283,7 +283,6 @@ function displayResults(result) {
             <a href="${item.path}" class="download-card" download>
                 <div class="download-icon">${download.icon}</div>
                 <h3>${item.title}</h3>
-                <p>${item.pages} pages | ${formatFileSize(item.size)}</p>
                 <p>Click to download PDF</p>
             </a>
         `;
