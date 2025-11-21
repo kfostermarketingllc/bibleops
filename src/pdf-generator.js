@@ -8,6 +8,12 @@ const path = require('path');
 async function generatePDF(content, title, filename, context) {
     return new Promise((resolve, reject) => {
         try {
+            // Ensure generated-pdfs directory exists
+            const outputDir = path.join(__dirname, '../generated-pdfs');
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
             const doc = new PDFDocument({
                 size: 'LETTER',
                 margins: {
@@ -18,7 +24,7 @@ async function generatePDF(content, title, filename, context) {
                 }
             });
 
-            const outputPath = path.join(__dirname, '../generated-pdfs', filename);
+            const outputPath = path.join(outputDir, filename);
             const writeStream = fs.createWriteStream(outputPath);
 
             doc.pipe(writeStream);
@@ -165,7 +171,7 @@ function addContent(doc, content) {
 function addFooter(doc, context) {
     const range = doc.bufferedPageRange();
     for (let i = 0; i < range.count; i++) {
-        doc.switchToPage(i);
+        doc.switchToPage(range.start + i);
 
         // Footer text
         const bottomY = 720;
