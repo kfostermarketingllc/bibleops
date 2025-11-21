@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BibleOps - Build Your Bible Study Curriculum | AI-Powered Study Builder</title>
+    <meta name="description" content="Build comprehensive Bible study curriculum with precision and care. 11 specialized AI agents create 45+ pages of theologically sound materials in 8 minutes.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <!-- BibleOps Logo - Simple Classic Style -->
+            <div class="logo">
+                <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Simple Bible Book -->
+                    <rect x="16" y="12" width="28" height="36" rx="2" fill="#1a2332" stroke="#1a2332" stroke-width="2"/>
+                    <rect x="19" y="15" width="22" height="30" rx="1" fill="#ffffff"/>
+
+                    <!-- Simple page lines -->
+                    <line x1="23" y1="22" x2="37" y2="22" stroke="#1a2332" stroke-width="1.5"/>
+                    <line x1="23" y1="27" x2="37" y2="27" stroke="#1a2332" stroke-width="1.5"/>
+                    <line x1="23" y1="32" x2="34" y2="32" stroke="#1a2332" stroke-width="1.5"/>
+                    <line x1="23" y1="37" x2="37" y2="37" stroke="#1a2332" stroke-width="1"/>
+
+                    <!-- Simple bookmark/divider -->
+                    <rect x="29" y="12" width="2" height="8" fill="#2c5282"/>
+                </svg>
+            </div>
+
+            <h1 class="brand-name">BibleOps</h1>
+            <p class="tagline">Build Your Bible Study Curriculum</p>
+            <p class="subtitle">Comprehensive curriculum creation with precision and theological care</p>
+            <div class="features-badges">
+                <span class="badge">11 Agents</span>
+                <span class="badge">45+ Pages</span>
+                <span class="badge">8 Minutes</span>
+            </div>
+        </header>
+
+        <!-- Main Form -->
+        <div class="form-container">
+            <div class="section-header">
+                <h2>📖 Build Your Bible Study</h2>
+                <p>Configure your curriculum with precision and care</p>
+            </div>
+
+            <form id="bibleStudyForm">
+
+                <!-- Section 1: Study Focus -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span class="section-icon">📚</span>
+                        <h3>Study Focus</h3>
+                    </div>
+                    <p class="section-description">Choose your Scripture passage or biblical theme</p>
+
+                    <div class="form-group">
+                        <label class="radio-label">
+                            <input type="radio" name="studyFocus" value="passage" checked>
+                            <span class="radio-content">
+                                <strong>Specific Passage</strong>
+                                <small>Book, chapter, or verses</small>
+                            </span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="studyFocus" value="theme">
+                            <span class="radio-content">
+                                <strong>Biblical Theme</strong>
+                                <small>Topic or theological concept</small>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div id="passageInput" class="form-group">
+                        <label for="passage">Bible Passage *</label>
+                        <input
+                            type="text"
+                            id="passage"
+                            name="passage"
+                            placeholder="e.g., Romans 8:1-17, Psalm 23, John 3, Ephesians"
+                            required
+                        >
+                        <small>Enter any book, chapter, or specific verse range</small>
+                    </div>
+
+                    <div id="themeInput" class="form-group" style="display: none;">
+                        <label for="theme">Biblical Theme *</label>
+                        <input
+                            type="text"
+                            id="theme"
+                            name="theme"
+                            placeholder="e.g., Grace, Faith, Prayer, God's Character, Discipleship"
+                        >
+                        <small>Enter the central theme or topic for this study</small>
+                    </div>
+                </div>
+
+                <!-- Section 2: Contact Information -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span class="section-icon">✉️</span>
+                        <h3>Your Information</h3>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="your.email@example.com"
+                            required
+                        >
+                        <small>We'll send your complete curriculum here</small>
+                    </div>
+                </div>
+
+                <!-- Section 3: Study Configuration -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span class="section-icon">⚙️</span>
+                        <h3>Study Settings</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="denomination">Denomination *</label>
+                            <select id="denomination" name="denomination" required>
+                                <option value="">Choose Your Tradition</option>
+                                <optgroup label="Catholic & Orthodox">
+                                    <option value="Roman Catholic">Roman Catholic</option>
+                                    <option value="Eastern Orthodox">Eastern Orthodox</option>
+                                    <option value="Oriental Orthodox">Oriental Orthodox</option>
+                                </optgroup>
+                                <optgroup label="Protestant - Reformed">
+                                    <option value="Lutheran">Lutheran (ELCA, LCMS)</option>
+                                    <option value="Presbyterian">Presbyterian (PCUSA, PCA)</option>
+                                    <option value="Reformed">Reformed</option>
+                                    <option value="Anglican">Anglican/Episcopal</option>
+                                </optgroup>
+                                <optgroup label="Protestant - Evangelical">
+                                    <option value="Baptist">Baptist (SBC, ABC, Independent)</option>
+                                    <option value="Methodist">Methodist (UMC)</option>
+                                    <option value="Pentecostal">Pentecostal</option>
+                                    <option value="Assemblies of God">Assemblies of God</option>
+                                    <option value="Non-denominational">Non-denominational</option>
+                                </optgroup>
+                                <optgroup label="Other Traditions">
+                                    <option value="Church of Christ">Church of Christ</option>
+                                    <option value="Seventh-day Adventist">Seventh-day Adventist</option>
+                                    <option value="Calvary Chapel">Calvary Chapel</option>
+                                    <option value="Vineyard">Vineyard</option>
+                                    <option value="Other">Other</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bibleVersion">Bible Translation *</label>
+                            <select id="bibleVersion" name="bibleVersion" required>
+                                <option value="">Choose Translation</option>
+                                <optgroup label="⭐ Most Popular">
+                                    <option value="NIV">NIV - New International Version</option>
+                                    <option value="ESV">ESV - English Standard Version</option>
+                                    <option value="NKJV">NKJV - New King James Version</option>
+                                    <option value="NLT">NLT - New Living Translation</option>
+                                </optgroup>
+                                <optgroup label="Word-for-Word">
+                                    <option value="KJV">KJV - King James Version</option>
+                                    <option value="NASB">NASB - New American Standard</option>
+                                    <option value="RSV">RSV - Revised Standard Version</option>
+                                </optgroup>
+                                <optgroup label="Thought-for-Thought">
+                                    <option value="CSB">CSB - Christian Standard Bible</option>
+                                    <option value="GNT">GNT - Good News Translation</option>
+                                    <option value="CEV">CEV - Contemporary English</option>
+                                    <option value="NRSV">NRSV - New Revised Standard</option>
+                                </optgroup>
+                                <optgroup label="Paraphrase">
+                                    <option value="The Message">The Message</option>
+                                    <option value="TLB">TLB - The Living Bible</option>
+                                </optgroup>
+                                <optgroup label="Catholic/Orthodox">
+                                    <option value="NAB">NAB - New American Bible</option>
+                                    <option value="NABRE">NABRE - NAB Revised</option>
+                                    <option value="OSB">OSB - Orthodox Study Bible</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ageGroup">Target Audience *</label>
+                            <select id="ageGroup" name="ageGroup" required>
+                                <option value="">Select Age Group</option>
+                                <option value="Children (Ages 6-11)">Children (Ages 6-11)</option>
+                                <option value="Middle School (Ages 12-14)">Middle School (Ages 12-14)</option>
+                                <option value="High School (Ages 15-18)">High School (Ages 15-18)</option>
+                                <option value="College/Young Adults (Ages 18-25)">College/Young Adults (Ages 18-25)</option>
+                                <option value="Adults (Ages 26-60)">Adults (Ages 26-60)</option>
+                                <option value="Seniors (Ages 60+)">Seniors (Ages 60+)</option>
+                                <option value="Mixed Ages">Mixed Ages (All Adults)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="duration">Study Duration</label>
+                            <select id="duration" name="duration">
+                                <option value="2 weeks">2 Weeks</option>
+                                <option value="4 weeks">4 Weeks</option>
+                                <option value="6 weeks">6 Weeks</option>
+                                <option value="8 weeks" selected>8 Weeks</option>
+                                <option value="12 weeks">12 Weeks (Quarter)</option>
+                                <option value="16 weeks">16 Weeks (Semester)</option>
+                                <option value="24 weeks">24 Weeks (6 Months)</option>
+                                <option value="40 weeks">40 Weeks (School Year)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Study Vision -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span class="section-icon">💡</span>
+                        <h3>Your Study Vision</h3>
+                    </div>
+                    <p class="section-description">Share your goals and context for this study</p>
+
+                    <div class="form-group">
+                        <label for="userThoughts">Study Goals & Context</label>
+                        <textarea
+                            id="userThoughts"
+                            name="userThoughts"
+                            rows="8"
+                            placeholder="Share your vision for this study (optional but recommended):&#10;&#10;• What do you want students to learn and experience?&#10;• What life transformation are you praying for?&#10;• Are there specific applications or themes to emphasize?&#10;• Any unique needs or challenges in your group?&#10;• Sensitive topics that need special care?&#10;• Your teaching philosophy or approach?&#10;&#10;The more context you provide, the better we can tailor the curriculum to serve your ministry!"
+                        ></textarea>
+                        <small>📝 Optional but highly recommended for best results</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="groupSize">Group Size</label>
+                            <select id="groupSize" name="groupSize">
+                                <option value="">Select Size (Optional)</option>
+                                <option value="Individual Study">Individual Study</option>
+                                <option value="Small Group (4-8)">Small Group (4-8)</option>
+                                <option value="Medium Group (8-15)">Medium Group (8-15)</option>
+                                <option value="Large Group (15-30)">Large Group (15-30)</option>
+                                <option value="Class/Congregation (30+)">Class/Congregation (30+)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="teachingContext">Ministry Context</label>
+                            <select id="teachingContext" name="teachingContext">
+                                <option value="">Select Context (Optional)</option>
+                                <option value="Sunday School">Sunday School</option>
+                                <option value="Small Group/Home Group">Small Group/Life Group</option>
+                                <option value="Bible Study">Midweek Bible Study</option>
+                                <option value="Discipleship Group">Discipleship Group</option>
+                                <option value="Youth Group">Youth Ministry</option>
+                                <option value="Personal Study">Personal Study</option>
+                                <option value="Christian School">Christian School</option>
+                                <option value="Homeschool">Homeschool</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="submit-section">
+                    <button type="submit" id="generateBtn" class="btn-generate">
+                        <span class="btn-icon">✨</span>
+                        <span>Build Curriculum</span>
+                    </button>
+                    <p class="estimate">⏱️ Complete in 8 minutes • 11 specialized agents • 45+ comprehensive pages</p>
+                    <p class="guarantee">✅ Theologically sound • Educationally excellent • Ready to teach</p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Progress Section (Hidden initially) -->
+        <div id="progressSection" class="progress-section" style="display: none;">
+            <div class="progress-header">
+                <div class="logo-small">
+                    <svg width="40" height="40" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Simplified technical logo for progress -->
+                        <rect x="14" y="12" width="28" height="36" rx="1" fill="#0A4B8F" stroke="#00D9FF" stroke-width="2"/>
+                        <line x1="20" y1="20" x2="37" y2="20" stroke="#00D9FF" stroke-width="1.5"/>
+                        <line x1="20" y1="26" x2="37" y2="26" stroke="#00D9FF" stroke-width="1.5"/>
+                        <line x1="20" y1="32" x2="34" y2="32" stroke="#00D9FF" stroke-width="1.5"/>
+                        <circle cx="44" cy="44" r="10" fill="#00D9FF"/>
+                        <circle cx="44" cy="44" r="6" fill="#0A4B8F"/>
+                    </svg>
+                </div>
+                <h2>Building Your Curriculum</h2>
+                <p>11 specialized agents working on your study</p>
+            </div>
+
+            <div class="progress-bar-container">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <p id="progressText" class="progress-text">Initializing agents...</p>
+            <div id="agentStatus" class="agent-status"></div>
+        </div>
+
+        <!-- Results Section (Hidden initially) -->
+        <div id="resultsSection" class="results-section" style="display: none;">
+            <div class="success-icon">✅</div>
+            <h2>Your Curriculum is Ready!</h2>
+            <p class="results-intro">Download your complete Bible study curriculum</p>
+
+            <div id="downloadLinks" class="download-grid"></div>
+
+            <div class="results-footer">
+                <button onclick="location.reload()" class="btn-secondary">Build Another Study</button>
+            </div>
+
+            <div class="results-stats">
+                <div class="stat">
+                    <div class="stat-number">11</div>
+                    <div class="stat-label">AI Agents</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">45+</div>
+                    <div class="stat-label">Pages</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">20+</div>
+                    <div class="stat-label">Hours Saved</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <strong>BibleOps</strong>
+                    <p>Build Your Bible Study Curriculum</p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://bibleops.com">bibleops.com</a>
+                </div>
+            </div>
+            <div class="footer-credits">
+                <p>Powered by 11 Specialized AI Agents</p>
+                <p class="resources">Built on proven methodologies from Gordon Fee, Douglas Stuart, Rick Warren, Jen Wilkin, and more</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
