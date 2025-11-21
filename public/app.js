@@ -4,7 +4,10 @@
  */
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:3001/api';
+// Auto-detect environment: localhost vs production
+const API_BASE_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:3001/api'
+    : 'https://bibleops.onrender.com/api';
 
 // Agent names for progress tracking
 const AGENTS = [

@@ -197,9 +197,9 @@ git push -u origin main
 
 2. **Add Environment Variables in Render:**
    ```
-   ANTHROPIC_API_KEY=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
+   ANTHROPIC_API_KEY=your_anthropic_api_key_here
 
-   MAILCHIMP_API_KEY=md-8ykab5BqZOWLnxTAfMikZA
+   MAILCHIMP_API_KEY=your_mailchimp_api_key_here
    MAILCHIMP_FROM_EMAIL=noreply@bibleops.com
    MAILCHIMP_FROM_NAME=BibleOps
    EMAIL_SERVICE=mailchimp
@@ -207,6 +207,8 @@ git push -u origin main
    NODE_ENV=production
    PORT=3001
    ```
+
+   **Note:** Use your actual API keys from your local `.env` file
 
 3. **Deploy and get URL:**
    - Example: `https://bibleops-backend.onrender.com`
