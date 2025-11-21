@@ -4,6 +4,33 @@
  */
 
 const mailchimp = require('@mailchimp/mailchimp_transactional')(process.env.MAILCHIMP_API_KEY);
+const archiver = require('archiver');
+const fs = require('fs');
+const path = require('path');
+
+/**
+ * Create a ZIP file containing all PDFs
+ * @param {Array} pdfs - Array of PDF file objects {name, title, path, buffer}
+ * @param {string} zipName - Name for the ZIP file
+ * @returns {Promise<Buffer>} - ZIP file as buffer
+ */
+async function createZipFile(pdfs, zipName) {
+    return new Promise((resolve, reject) => {
+        const archive = archiver('zip', { zlib: { level: 9 } });
+        const chunks = [];
+
+        archive.on('data', chunk => chunks.push(chunk));
+        archive.on('end', () => resolve(Buffer.concat(chunks)));
+        archive.on('error', reject);
+
+        // Add each PDF to the ZIP
+        pdfs.forEach(pdf => {
+            archive.append(pdf.buffer, { name: pdf.name });
+        });
+
+        archive.finalize();
+    });
+}
 
 /**
  * Send Bible study curriculum email with PDF attachments
@@ -19,12 +46,18 @@ async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [], baseUrl
 
         const studyFocus = passage || theme || 'Bible Study';
 
-        // Prepare attachments as backup
-        const attachments = pdfs.map(pdf => ({
-            type: 'application/pdf',
-            name: pdf.name,
-            content: pdf.buffer.toString('base64')
-        }));
+        // Create ZIP file containing all PDFs
+        console.log('📦 Creating ZIP file with all PDFs...');
+        const zipFileName = `BibleOps_${studyFocus.replace(/[^a-zA-Z0-9]/g, '_')}_Curriculum.zip`;
+        const zipBuffer = await createZipFile(pdfs, zipFileName);
+        console.log(`✅ ZIP file created: ${zipFileName} (${(zipBuffer.length / 1024 / 1024).toFixed(2)} MB)`);
+
+        // Prepare ZIP as attachment
+        const attachments = [{
+            type: 'application/zip',
+            name: zipFileName,
+            content: zipBuffer.toString('base64')
+        }];
 
         // Create HTML email content
         const htmlContent = `
@@ -119,7 +152,12 @@ async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [], baseUrl
             <p><strong>⏱️ Generation:</strong> Powered by advanced AI technology</p>
         </div>
 
-        <h3>Your Curriculum (Attached):</h3>
+        <p style="background: #f7fafc; padding: 20px; border-left: 4px solid #48bb78; margin: 20px 0; text-align: center;">
+            <strong style="font-size: 1.1rem;">📦 ${zipFileName}</strong><br>
+            <span style="color: #4a5568; margin-top: 8px; display: inline-block;">One convenient ZIP file containing all ${pdfs.length} PDFs</span>
+        </p>
+
+        <h3>Included in Your ZIP File:</h3>
         <ul class="pdf-list">
             ${pdfs.map(pdf => `
                 <li class="pdf-item">
@@ -129,13 +167,10 @@ async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [], baseUrl
             `).join('')}
         </ul>
 
-        <p style="background: #f7fafc; padding: 15px; border-left: 4px solid #48bb78; margin: 20px 0;">
-            <strong>📎 All ${pdfs.length} PDFs are attached to this email</strong> - Download them from your email attachments.
-        </p>
-
         <h3>How to Use These Materials:</h3>
         <ol>
-            <li><strong>Download PDFs:</strong> Save the attached files from this email</li>
+            <li><strong>Download ZIP:</strong> Save the attached ZIP file from this email</li>
+            <li><strong>Extract Files:</strong> Unzip to access all ${pdfs.length} PDF guides</li>
             <li><strong>Review the Overview:</strong> Start with the Foundational Materials guide</li>
             <li><strong>Prepare Your Teaching:</strong> Use the specialized guides for deep study</li>
             <li><strong>Engage Your Group:</strong> Utilize discussion questions and activities</li>
@@ -175,13 +210,15 @@ Thank you for using BibleOps. Your comprehensive Bible study curriculum for ${st
 Study Focus: ${studyFocus}
 Included Materials: ${pdfs.length} specialized study guides
 
-Your Curriculum (Attached):
+📦 ${zipFileName}
+One convenient ZIP file containing all ${pdfs.length} PDFs
+
+Included in Your ZIP File:
 ${pdfs.map((pdf, i) => `${i + 1}. ${pdf.title}`).join('\n')}
 
-All ${pdfs.length} PDFs are attached to this email - Download them from your email attachments.
-
 How to Use These Materials:
-1. Download PDFs: Save the attached files from this email
+1. Download ZIP: Save the attached ZIP file from this email
+2. Extract Files: Unzip to access all ${pdfs.length} PDF guides
 2. Review the Overview: Start with the Foundational Materials guide
 3. Prepare Your Teaching: Use the specialized guides for deep study
 4. Engage Your Group: Utilize discussion questions and activities
@@ -198,7 +235,7 @@ bibleops.com
         const message = {
             from_email: process.env.MAILCHIMP_FROM_EMAIL || 'noreply@bibleops.com',
             from_name: process.env.MAILCHIMP_FROM_NAME || 'BibleOps',
-            subject: `Your ${studyFocus} Bible Study Curriculum - ${pdfs.length} PDFs Attached`,
+            subject: `Your ${studyFocus} Bible Study Curriculum - ZIP File Ready`,
             text: textContent,
             html: htmlContent,
             to: [
