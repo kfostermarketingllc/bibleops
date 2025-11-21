@@ -19,6 +19,13 @@ async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [], baseUrl
 
         const studyFocus = passage || theme || 'Bible Study';
 
+        // Prepare attachments as backup
+        const attachments = pdfs.map(pdf => ({
+            type: 'application/pdf',
+            name: pdf.name,
+            content: pdf.buffer.toString('base64')
+        }));
+
         // Create HTML email content
         const htmlContent = `
 <!DOCTYPE html>
@@ -104,7 +111,7 @@ async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [], baseUrl
     <div class="content">
         <h2>Your Bible Study Curriculum is Ready!</h2>
 
-        <p>Thank you for using BibleOps. Your comprehensive Bible study curriculum for <strong>${studyFocus}</strong> has been generated and is ready to download.</p>
+        <p>Thank you for using BibleOps. Your comprehensive Bible study curriculum for <strong>${studyFocus}</strong> has been generated and is ready for you.</p>
 
         <div class="highlight">
             <p><strong>📖 Study Focus:</strong> ${studyFocus}</p>
@@ -112,21 +119,23 @@ async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [], baseUrl
             <p><strong>⏱️ Generation:</strong> Powered by advanced AI technology</p>
         </div>
 
-        <h3>Download Your Curriculum:</h3>
+        <h3>Your Curriculum (Attached):</h3>
         <ul class="pdf-list">
             ${pdfs.map(pdf => `
                 <li class="pdf-item">
                     <span class="pdf-icon">📄</span>
-                    <a href="${baseUrl}${pdf.path}" style="color: #2c5282; text-decoration: none; font-weight: 600;">
-                        ${pdf.title}
-                    </a>
+                    <strong>${pdf.title}</strong>
                 </li>
             `).join('')}
         </ul>
 
+        <p style="background: #f7fafc; padding: 15px; border-left: 4px solid #48bb78; margin: 20px 0;">
+            <strong>📎 All ${pdfs.length} PDFs are attached to this email</strong> - Download them from your email attachments.
+        </p>
+
         <h3>How to Use These Materials:</h3>
         <ol>
-            <li><strong>Download PDFs:</strong> Click the links above to download each guide</li>
+            <li><strong>Download PDFs:</strong> Save the attached files from this email</li>
             <li><strong>Review the Overview:</strong> Start with the Foundational Materials guide</li>
             <li><strong>Prepare Your Teaching:</strong> Use the specialized guides for deep study</li>
             <li><strong>Engage Your Group:</strong> Utilize discussion questions and activities</li>
@@ -166,11 +175,13 @@ Thank you for using BibleOps. Your comprehensive Bible study curriculum for ${st
 Study Focus: ${studyFocus}
 Included Materials: ${pdfs.length} specialized study guides
 
-Download Your Curriculum:
-${pdfs.map((pdf, i) => `${i + 1}. ${pdf.title}: ${baseUrl}${pdf.path}`).join('\n')}
+Your Curriculum (Attached):
+${pdfs.map((pdf, i) => `${i + 1}. ${pdf.title}`).join('\n')}
+
+All ${pdfs.length} PDFs are attached to this email - Download them from your email attachments.
 
 How to Use These Materials:
-1. Download PDFs: Click the links above to download each guide
+1. Download PDFs: Save the attached files from this email
 2. Review the Overview: Start with the Foundational Materials guide
 3. Prepare Your Teaching: Use the specialized guides for deep study
 4. Engage Your Group: Utilize discussion questions and activities
@@ -187,7 +198,7 @@ bibleops.com
         const message = {
             from_email: process.env.MAILCHIMP_FROM_EMAIL || 'noreply@bibleops.com',
             from_name: process.env.MAILCHIMP_FROM_NAME || 'BibleOps',
-            subject: `Your ${studyFocus} Bible Study Curriculum - Ready to Download`,
+            subject: `Your ${studyFocus} Bible Study Curriculum - ${pdfs.length} PDFs Attached`,
             text: textContent,
             html: htmlContent,
             to: [
@@ -196,6 +207,7 @@ bibleops.com
                     type: 'to'
                 }
             ],
+            attachments: attachments,
             tags: ['bible-study', 'curriculum'],
             metadata: {
                 study_focus: studyFocus,
