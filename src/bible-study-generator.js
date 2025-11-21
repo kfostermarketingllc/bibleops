@@ -52,155 +52,116 @@ async function generateBibleStudy(formData) {
         // Add foundation to context for all subsequent agents
         context.foundationDocument = foundationContent;
 
-        // Step 2: BIBLE VERSION AGENT
-        console.log('📖 Agent 2/11: Bible Translation Specialist');
-        const versionContent = await callAgent(
-            AGENTS.bibleVersion,
-            context,
-            foundationContent
-        );
-        results.bibleVersion = await generatePDF(
-            versionContent,
-            'Bible Translation Recommendation',
-            `bible_version_${timestamp}.pdf`,
-            context
-        );
-        console.log('✅ Bible version complete\n');
+        // Steps 2-11: Run all remaining agents in PARALLEL for speed
+        console.log('🚀 Running 10 agents in parallel...\n');
 
-        // Step 3: DENOMINATIONAL THEOLOGY AGENT
-        console.log('✝️ Agent 3/11: Denominational Theology Specialist');
-        const theologyContent = await callAgent(
-            AGENTS.theology,
-            context,
-            foundationContent
-        );
-        results.theology = await generatePDF(
-            theologyContent,
-            'Denominational Theological Framework',
-            `theology_${timestamp}.pdf`,
-            context
-        );
-        console.log('✅ Theology complete\n');
+        const parallelAgents = [
+            {
+                agent: AGENTS.bibleVersion,
+                key: 'bibleVersion',
+                title: 'Bible Translation Recommendation',
+                filename: `bible_version_${timestamp}.pdf`,
+                icon: '📖',
+                name: 'Bible Translation'
+            },
+            {
+                agent: AGENTS.theology,
+                key: 'theology',
+                title: 'Denominational Theological Framework',
+                filename: `theology_${timestamp}.pdf`,
+                icon: '✝️',
+                name: 'Denominational Theology'
+            },
+            {
+                agent: AGENTS.context,
+                key: 'biblicalContext',
+                title: 'Biblical Context Document',
+                filename: `context_${timestamp}.pdf`,
+                icon: '🏛️',
+                name: 'Biblical Context'
+            },
+            {
+                agent: AGENTS.hermeneutics,
+                key: 'hermeneutics',
+                title: 'Hermeneutical Guide',
+                filename: `hermeneutics_${timestamp}.pdf`,
+                icon: '🔍',
+                name: 'Hermeneutics'
+            },
+            {
+                agent: AGENTS.languages,
+                key: 'originalLanguages',
+                title: 'Original Languages Guide',
+                filename: `languages_${timestamp}.pdf`,
+                icon: '🔤',
+                name: 'Original Languages'
+            },
+            {
+                agent: AGENTS.crossReference,
+                key: 'crossReference',
+                title: 'Cross-Reference & Theology Guide',
+                filename: `cross_reference_${timestamp}.pdf`,
+                icon: '🔗',
+                name: 'Cross-Reference'
+            },
+            {
+                agent: AGENTS.application,
+                key: 'application',
+                title: 'Application & Discipleship Guide',
+                filename: `application_${timestamp}.pdf`,
+                icon: '🎯',
+                name: 'Application'
+            },
+            {
+                agent: AGENTS.discussion,
+                key: 'smallGroup',
+                title: 'Small Group Discussion Guide',
+                filename: `discussion_${timestamp}.pdf`,
+                icon: '💬',
+                name: 'Small Group Discussion'
+            },
+            {
+                agent: AGENTS.devotional,
+                key: 'prayer',
+                title: 'Prayer & Devotional Guide',
+                filename: `devotional_${timestamp}.pdf`,
+                icon: '🙏',
+                name: 'Prayer & Devotional'
+            },
+            {
+                agent: AGENTS.teaching,
+                key: 'teachingMethods',
+                title: 'Teaching Methods Guide',
+                filename: `teaching_${timestamp}.pdf`,
+                icon: '👨‍🏫',
+                name: 'Teaching Methods'
+            }
+        ];
 
-        // Step 4: BIBLICAL CONTEXT AGENT
-        console.log('🏛️ Agent 4/11: Biblical Context Specialist');
-        const contextContent = await callAgent(
-            AGENTS.context,
-            context,
-            foundationContent
+        // Execute all agents in parallel
+        const parallelResults = await Promise.all(
+            parallelAgents.map(async (agentConfig) => {
+                console.log(`${agentConfig.icon} Starting: ${agentConfig.name}...`);
+                const content = await callAgent(
+                    agentConfig.agent,
+                    context,
+                    foundationContent
+                );
+                const pdf = await generatePDF(
+                    content,
+                    agentConfig.title,
+                    agentConfig.filename,
+                    context
+                );
+                console.log(`✅ Completed: ${agentConfig.name}`);
+                return { key: agentConfig.key, pdf };
+            })
         );
-        results.biblicalContext = await generatePDF(
-            contextContent,
-            'Biblical Context Document',
-            `context_${timestamp}.pdf`,
-            context
-        );
-        console.log('✅ Biblical context complete\n');
 
-        // Step 5: HERMENEUTICS AGENT
-        console.log('🔍 Agent 5/11: Hermeneutics & Interpretation Specialist');
-        const hermeneuticsContent = await callAgent(
-            AGENTS.hermeneutics,
-            context,
-            foundationContent
-        );
-        results.hermeneutics = await generatePDF(
-            hermeneuticsContent,
-            'Hermeneutical Guide',
-            `hermeneutics_${timestamp}.pdf`,
-            context
-        );
-        console.log('✅ Hermeneutics complete\n');
-
-        // Step 6: ORIGINAL LANGUAGES AGENT
-        console.log('🔤 Agent 6/11: Original Languages Specialist');
-        const languagesContent = await callAgent(
-            AGENTS.languages,
-            context,
-            foundationContent
-        );
-        results.languages = await generatePDF(
-            languagesContent,
-            'Original Languages Guide',
-            `languages_${timestamp}.pdf`,
-            context
-        );
-        console.log('✅ Original languages complete\n');
-
-        // Step 7: CROSS-REFERENCE & THEOLOGY AGENT
-        console.log('🔗 Agent 7/11: Cross-Reference & Theology Specialist');
-        const crossRefContent = await callAgent(
-            AGENTS.crossReference,
-            context,
-            foundationContent
-        );
-        results.crossReference = await generatePDF(
-            crossRefContent,
-            'Cross-Reference & Theology Guide',
-            `cross_reference_${timestamp}.pdf`,
-            context
-        );
-        console.log('✅ Cross-references complete\n');
-
-        // Step 8: APPLICATION & DISCIPLESHIP AGENT
-        console.log('🎯 Agent 8/11: Application & Discipleship Specialist');
-        const applicationContent = await callAgent(
-            AGENTS.application,
-            context,
-            foundationContent
-        );
-        results.application = await generatePDF(
-            applicationContent,
-            'Application & Discipleship Guide',
-            `application_${timestamp}.pdf`,
-            context
-        );
-        console.log('✅ Application complete\n');
-
-        // Step 9: SMALL GROUP DISCUSSION AGENT
-        console.log('💬 Agent 9/11: Small Group Discussion Specialist');
-        const discussionContent = await callAgent(
-            AGENTS.discussion,
-            context,
-            foundationContent
-        );
-        results.discussion = await generatePDF(
-            discussionContent,
-            'Small Group Discussion Guide',
-            `discussion_${timestamp}.pdf`,
-            context
-        );
-        console.log('✅ Discussion complete\n');
-
-        // Step 10: PRAYER & DEVOTIONAL AGENT
-        console.log('🙏 Agent 10/11: Prayer & Devotional Specialist');
-        const devotionalContent = await callAgent(
-            AGENTS.devotional,
-            context,
-            foundationContent
-        );
-        results.devotional = await generatePDF(
-            devotionalContent,
-            'Prayer & Devotional Guide',
-            `devotional_${timestamp}.pdf`,
-            context
-        );
-        console.log('✅ Devotional complete\n');
-
-        // Step 11: TEACHING METHODS AGENT
-        console.log('👨‍🏫 Agent 11/11: Teaching Methods Specialist');
-        const teachingContent = await callAgent(
-            AGENTS.teaching,
-            context,
-            foundationContent
-        );
-        results.teaching = await generatePDF(
-            teachingContent,
-            'Teaching Methods Guide',
-            `teaching_${timestamp}.pdf`,
-            context
-        );
-        console.log('✅ Teaching methods complete\n');
+        // Add results to main results object
+        parallelResults.forEach(({ key, pdf }) => {
+            results[key] = pdf;
+        });
 
         console.log('🎉 ALL 11 AGENTS COMPLETED SUCCESSFULLY!\n');
         return results;
