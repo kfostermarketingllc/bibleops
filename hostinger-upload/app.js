@@ -11,7 +11,6 @@ const API_BASE_URL = window.location.hostname === 'localhost'
 
 // Component names for progress tracking
 const COMPONENTS = [
-    { name: 'Book Research & Analysis', icon: '📖', bookOnly: true },
     { name: 'Foundational Materials & Reference', icon: '📚' },
     { name: 'Bible Translation', icon: '📖' },
     { name: 'Denominational Theology', icon: '✝️' },
@@ -22,9 +21,7 @@ const COMPONENTS = [
     { name: 'Application & Discipleship', icon: '🎯' },
     { name: 'Small Group Discussion', icon: '💬' },
     { name: 'Prayer & Devotional', icon: '🙏' },
-    { name: 'Teaching Methods', icon: '👨‍🏫' },
-    { name: 'Student Study Guide', icon: '📝' },
-    { name: "Leader's Guide", icon: '👥' }
+    { name: 'Teaching Methods', icon: '👨‍🏫' }
 ];
 
 // Initialize on page load
@@ -40,41 +37,24 @@ function setupFormHandlers() {
     const form = document.getElementById('bibleStudyForm');
     const studyFocusRadios = document.querySelectorAll('input[name="studyFocus"]');
 
-    // Toggle between passage, theme, and book inputs
+    // Toggle between passage and theme inputs
     studyFocusRadios.forEach(radio => {
         radio.addEventListener('change', (e) => {
             const passageInput = document.getElementById('passageInput');
             const themeInput = document.getElementById('themeInput');
-            const bookInput = document.getElementById('bookInput');
             const passageField = document.getElementById('passage');
             const themeField = document.getElementById('theme');
-            const bookTitleField = document.getElementById('bookTitle');
-            const bookAuthorField = document.getElementById('bookAuthor');
 
             if (e.target.value === 'passage') {
                 passageInput.style.display = 'block';
                 themeInput.style.display = 'none';
-                bookInput.style.display = 'none';
                 passageField.required = true;
                 themeField.required = false;
-                bookTitleField.required = false;
-                bookAuthorField.required = false;
-            } else if (e.target.value === 'theme') {
+            } else {
                 passageInput.style.display = 'none';
                 themeInput.style.display = 'block';
-                bookInput.style.display = 'none';
                 passageField.required = false;
                 themeField.required = true;
-                bookTitleField.required = false;
-                bookAuthorField.required = false;
-            } else if (e.target.value === 'book') {
-                passageInput.style.display = 'none';
-                themeInput.style.display = 'none';
-                bookInput.style.display = 'block';
-                passageField.required = false;
-                themeField.required = false;
-                bookTitleField.required = true;
-                bookAuthorField.required = true;
             }
         });
     });
@@ -96,24 +76,29 @@ async function handleFormSubmit(e) {
         return;
     }
 
-    // Disable submit button
+    // Hide form and show progress
+    document.querySelector('.form-container').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'block';
     document.getElementById('generateBtn').disabled = true;
-    document.getElementById('generateBtn').textContent = 'Submitting...';
+
+    // Start progress simulation
+    simulateProgress();
 
     try {
-        // Call API to generate curriculum (returns immediately)
+        // Call API to generate curriculum
         const result = await generateCurriculum(formData);
 
-        // Show success message
-        displayAsyncSuccess(result);
+        // Show results
+        displayResults(result);
 
     } catch (error) {
-        console.error('Error submitting request:', error);
-        alert('Error submitting request: ' + error.message);
+        console.error('Error generating curriculum:', error);
+        alert('Error generating curriculum. Please check the console and try again.');
 
-        // Reset button
+        // Reset UI
+        document.querySelector('.form-container').style.display = 'block';
+        document.getElementById('progressSection').style.display = 'none';
         document.getElementById('generateBtn').disabled = false;
-        document.getElementById('generateBtn').textContent = 'Generate My Bible Study';
     }
 }
 
@@ -133,17 +118,11 @@ function collectFormData() {
         teachingContext: document.getElementById('teachingContext').value
     };
 
-    // Add passage, theme, or book based on selection
+    // Add passage or theme based on selection
     if (formData.studyFocus === 'passage') {
         formData.passage = document.getElementById('passage').value;
-    } else if (formData.studyFocus === 'theme') {
+    } else {
         formData.theme = document.getElementById('theme').value;
-    } else if (formData.studyFocus === 'book') {
-        formData.bookTitle = document.getElementById('bookTitle').value;
-        formData.bookAuthor = document.getElementById('bookAuthor').value;
-        formData.bookISBN = document.getElementById('bookISBN').value || '';
-        formData.bookISBN13 = document.getElementById('bookISBN13').value || '';
-        formData.passage = document.getElementById('bookPassage').value || '';
     }
 
     return formData;
@@ -166,18 +145,6 @@ function validateForm(formData) {
     if (formData.studyFocus === 'theme' && !formData.theme) {
         alert('Please enter a study theme');
         return false;
-    }
-
-    if (formData.studyFocus === 'book') {
-        if (!formData.bookTitle) {
-            alert('Please enter the book title');
-            return false;
-        }
-        if (!formData.bookAuthor) {
-            alert('Please enter the book author');
-            return false;
-        }
-        // Related Scripture passage is optional for book studies
     }
 
     if (!formData.denomination) {
@@ -211,15 +178,8 @@ async function generateCurriculum(formData) {
     });
 
     if (!response.ok) {
-        let errorMessage = 'Failed to generate curriculum';
-        try {
-            const error = await response.json();
-            errorMessage = error.message || error.error || errorMessage;
-        } catch (e) {
-            // If JSON parsing fails, use status text
-            errorMessage = response.statusText || errorMessage;
-        }
-        throw new Error(errorMessage);
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to generate curriculum');
     }
 
     return await response.json();
@@ -284,63 +244,7 @@ function simulateProgress() {
 }
 
 /**
- * Display async success message
- */
-function displayAsyncSuccess(result) {
-    // Hide form
-    document.querySelector('.form-container').style.display = 'none';
-
-    // Show success message
-    const successSection = document.getElementById('successSection') || createSuccessSection();
-    successSection.style.display = 'block';
-
-    // Update message
-    document.getElementById('successEmail').textContent = result.email;
-    document.getElementById('estimatedTime').textContent = result.estimatedTime || '6-10 minutes';
-    document.getElementById('jobId').textContent = result.jobId;
-}
-
-/**
- * Create success section if it doesn't exist
- */
-function createSuccessSection() {
-    const section = document.createElement('div');
-    section.id = 'successSection';
-    section.className = 'success-section';
-    section.style.display = 'none';
-    section.innerHTML = `
-        <div class="success-container">
-            <div class="success-icon">✅</div>
-            <h2>Your Bible Study is Being Generated!</h2>
-            <div class="success-message">
-                <p class="main-message">
-                    Your curriculum is being created by our 14 specialized AI agents.
-                </p>
-                <div class="info-box">
-                    <p><strong>📧 Email:</strong> <span id="successEmail"></span></p>
-                    <p><strong>⏱️ Estimated Time:</strong> <span id="estimatedTime"></span></p>
-                    <p><strong>🆔 Job ID:</strong> <code id="jobId"></code></p>
-                </div>
-                <p class="secondary-message">
-                    You'll receive an email with all PDFs when complete. Feel free to close this page!
-                </p>
-            </div>
-            <div class="success-actions">
-                <button onclick="location.reload()" class="btn btn-secondary">Generate Another Study</button>
-            </div>
-        </div>
-    `;
-
-    // Insert BEFORE the footer instead of appending to end
-    const footer = document.querySelector('.footer');
-    const container = document.querySelector('.container');
-    container.insertBefore(section, footer);
-
-    return section;
-}
-
-/**
- * Display results (DEPRECATED - kept for backwards compatibility)
+ * Display results
  */
 function displayResults(result) {
     // Clear progress interval

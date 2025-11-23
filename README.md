@@ -2,13 +2,34 @@
 
 ## Overview
 
-This is a specialized AI-powered Bible study curriculum generator featuring **11 expert agents**, each fine-tuned for specific aspects of biblical education and spiritual formation.
+This is a specialized AI-powered Bible study curriculum generator featuring **14 expert agents**, each fine-tuned for specific aspects of biblical education and spiritual formation.
 
 Based on the proven CurrForge curriculum model, this system creates comprehensive, theologically sound, denominationally-sensitive Bible study materials in minutes.
 
+**New in v3.0**: AWS S3 integration with temporary download links (14-day expiration) for better email deliverability.
+
 ---
 
-## 🤖 The 11 Specialized Agents
+## 🤖 The 14 Specialized Agents
+
+### **NEW: Book Research Agent**
+**Purpose**: Researches and analyzes Christian or secular books for integration with Bible study
+
+**Expertise**:
+- Book research and literary analysis
+- Plot/theme extraction and analysis
+- Biblical integration points
+- Worldview comparison
+- Critical analysis through biblical lens
+- Scripture connections to book themes
+
+**Output**: 6-8 page comprehensive book analysis for Bible study integration
+
+**Use Case**: Enable book-based Bible studies (e.g., studying "Mere Christianity" with related Scripture passages)
+
+---
+
+## Original 11 Bible Study Agents
 
 ### **1. Foundational Materials & Reference Agent**
 **Purpose**: Establishes the pedagogical and hermeneutical framework for the entire curriculum
@@ -173,9 +194,48 @@ Based on the proven CurrForge curriculum model, this system creates comprehensiv
 
 ---
 
+### **NEW: 12. Student Study Guide Agent**
+**Purpose**: Creates printable study guides for participants with writing prompts and engagement tools
+
+**Features**:
+- "What to Look For When Reading" sections
+- "Big Takeaway" sections for each session
+- Writing prompts and reflection questions
+- Reading guides with comprehension questions
+- Personal application exercises
+- Prayer guides and Scripture meditation
+- Group discussion preparation
+- Weekly review and integration sections
+
+**Output**: 20-30 page downloadable/printable study guide designed for student engagement
+
+**Use Case**: Participants can download, print, and fill out as they study, enhancing retention and application
+
+---
+
+### **NEW: 13. Leader's Guide Agent**
+**Purpose**: Creates comprehensive facilitator guides that track with the student guide
+
+**Features**:
+- Session-by-session preparation checklists
+- Theological teaching notes and commentary
+- Student guide correlation and pacing
+- Discussion facilitation strategies
+- Expected answers and insights
+- Troubleshooting tips for common challenges
+- Time management guidance
+- Prayer guide for leaders
+
+**Output**: 30-40 page leader's guide empowering confident, effective facilitation
+
+**Use Case**: Leaders can follow along with student guide while accessing deeper content, teaching notes, and facilitation help
+
+---
+
 ## 📊 Total Output
 
-**45-55 pages of comprehensive Bible study curriculum** including:
+**60-70+ pages of comprehensive Bible study curriculum** including:
+- Book research and analysis (if book study)
 - Foundational framework
 - Translation guidance
 - Theological framework
@@ -187,13 +247,15 @@ Based on the proven CurrForge curriculum model, this system creates comprehensiv
 - Discussion questions
 - Devotional content
 - Teaching methods
+- **Student study guide** (printable with writing prompts)
+- **Leader's guide** (facilitator notes and teaching help)
 
 ---
 
 ## 🎯 How It Works
 
 ### Input Required:
-- **Scripture passage/book** to study
+- **Scripture passage/book** OR **Book to study** (with title, author, ISBN optional)
 - **Target audience** (age, spiritual maturity)
 - **Denomination** (for theological sensitivity)
 - **Study duration** (weeks/months)
@@ -202,14 +264,15 @@ Based on the proven CurrForge curriculum model, this system creates comprehensiv
 - **Special considerations** (group size, teaching context, etc.)
 
 ### Process:
-1. **Foundational Agent runs FIRST** - establishes framework
-2. **All other agents** receive foundation and build on it
-3. **Each agent generates** specialized content
-4. **PDFs created** for each component
-5. **Complete curriculum** ready for use
+1. **Book Research Agent** (if book study) - analyzes the book
+2. **Foundational Agent runs NEXT** - establishes framework
+3. **All other agents** run in parallel receiving context from steps 1-2
+4. **Each agent generates** specialized content
+5. **PDFs created** for each component (up to 14 PDFs)
+6. **Complete curriculum** emailed to you ready for use
 
 ### Time:
-**5-8 minutes** for complete generation (11 AI agent calls)
+**6-10 minutes** for complete generation (13-14 AI agent calls depending on study type)
 
 ---
 
@@ -309,34 +372,55 @@ const BIBLE_STUDY_AGENT_LIBRARY = {
 ```
 
 ### **Integration with Backend**
-- Similar to CurrForge curriculum generator
-- Anthropic Claude API integration
+- Anthropic Claude API integration (Claude 3.7 Sonnet)
 - PDF generation with PDFKit
-- Sequential agent execution (foundation first)
-- Context passed between agents
+- Sequential agent execution with batched parallel processing
+- Book Research Agent → Foundation Agent → 12 agents in batches
+- Context passed between agents for coherence
+
+### **Email & File Delivery (v3.0)**
+- AWS S3 for PDF storage
+- Presigned URLs with 14-day expiration
+- Automatic file cleanup (S3 lifecycle policy)
+- Individual download links (no large email attachments)
+- Better email deliverability
+
+### **Async Processing**
+- Non-blocking API response
+- Background job processing
+- Job status tracking
+- User can close browser immediately
+- Email notification when complete
 
 ---
 
 ## 📈 Future Enhancements
 
-### Phase 1 (Immediate)
-- [ ] Backend integration (server.js, curriculum-generator.js)
-- [ ] Frontend form for Bible study input
-- [ ] PDF generation for all 11 outputs
-- [ ] Test with sample passages
+### Phase 1 (Complete) ✅
+- [x] Backend integration (server.js, curriculum-generator.js)
+- [x] Frontend form for Bible study input
+- [x] PDF generation for all 14 outputs
+- [x] Book study integration
+- [x] Student & Leader guides
+- [x] Async workflow with email notifications
+- [x] AWS S3 integration with temporary download links
+- [x] Rate limiting fix (batched agent execution)
 
 ### Phase 2 (Next)
+- [ ] CloudFront CDN for faster downloads
+- [ ] Download tracking and analytics
+- [ ] Email reminder before links expire
+- [ ] Batch download ZIP option
 - [ ] Additional denominational options
-- [ ] More Bible version options
-- [ ] Topical study (not just passage-based)
 - [ ] Multi-session series generator
 
 ### Phase 3 (Future)
-- [ ] User accounts and saving studies
+- [ ] User accounts and saved studies
 - [ ] Collaborative study creation
 - [ ] Commentary integration
 - [ ] Custom agent configuration
 - [ ] Multiple language support
+- [ ] Mobile app
 
 ---
 
@@ -413,16 +497,67 @@ Plus insights from learning science, spiritual formation, and Christian educatio
 ## 💰 Cost Estimate
 
 **Per Bible Study Generation:**
-- 11 AI agent calls
-- ~80,000-120,000 tokens
-- **Cost: $0.80-1.50 per complete curriculum**
-- **Output: 45-55 pages of professional content**
+- 13-14 AI agent calls (depending on study type)
+- ~100,000-180,000 tokens (more for book studies)
+- **Cost: $1.00-2.25 per complete curriculum**
+- **Output: 60-70+ pages of professional content**
 
 **Exceptional Value:**
-- Saves 20-30 hours of preparation time
+- Saves 30-40 hours of preparation time
 - Theologically sound and educationally rigorous
 - Denominationally sensitive
 - Age-appropriate and contextual
+- Includes printable student and leader guides
+- Book integration capability for cultural engagement
+
+---
+
+## 🚀 Setup & Deployment
+
+### Prerequisites:
+- Node.js 18+ and npm
+- Anthropic API key
+- Mailchimp Transactional API key
+- AWS account with S3 access
+
+### Quick Start:
+
+```bash
+# Clone repository
+git clone https://github.com/yourusername/bibleops.git
+cd bibleops
+
+# Install dependencies
+npm install
+
+# Configure environment (.env file)
+ANTHROPIC_API_KEY=your_anthropic_key
+MAILCHIMP_API_KEY=your_mailchimp_key
+AWS_ACCESS_KEY_ID=your_aws_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret
+AWS_REGION=us-east-1
+AWS_S3_BUCKET_NAME=bibleops-pdfs
+
+# Start server
+npm start
+```
+
+### AWS S3 Setup:
+
+See detailed instructions in **`AWS_S3_SETUP.md`** for:
+- Creating S3 bucket
+- Setting up lifecycle policy (14-day auto-delete)
+- Creating IAM user with credentials
+- Configuring environment variables
+
+**Quick Start**: See **`QUICK_START_S3.md`** for 5-minute setup
+
+### Deployment (Render.com):
+
+1. Connect GitHub repository to Render
+2. Add environment variables in dashboard
+3. Deploy automatically on push to main
+4. Verify S3 connection in startup logs
 
 ---
 
@@ -431,12 +566,14 @@ Plus insights from learning science, spiritual formation, and Christian educatio
 This is a specialized adaptation of the CurrForge curriculum generator for Bible study contexts.
 
 **Key Differences from CurrForge:**
-- 11 Bible-specific agents vs. 10 literature agents
+- 14 Bible-specific agents vs. 10 literature agents
+- Book research and integration capability
 - Denominational theology integration
 - Original languages (Hebrew/Greek) support
 - Multiple Bible version handling
 - Spiritual formation emphasis
 - Hermeneutical rigor
+- Student and leader study guides included
 
 **Integration Notes:**
 - Use similar backend architecture as CurrForge
