@@ -6,7 +6,8 @@ const fs = require('fs');
 require('dotenv').config();
 
 const { generateBibleStudy } = require('./bible-study-generator');
-const { sendCurriculumEmail, testConnection } = require('./email-service');
+const { sendCurriculumEmailWithLinks, testConnection } = require('./email-service-s3');
+const { testS3Connection } = require('./s3-service');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -163,11 +164,12 @@ async function processGenerationInBackground(jobId, formData) {
 
             console.log(`📦 [${jobId}] Found ${pdfFiles.length} PDFs to send`);
 
-            // Send email
-            const emailResult = await sendCurriculumEmail({
+            // Send email with S3 download links
+            const emailResult = await sendCurriculumEmailWithLinks({
                 toEmail: formData.email,
                 passage: formData.passage,
                 theme: formData.theme,
+                bookTitle: formData.bookTitle,
                 pdfs: pdfFiles
             });
 
@@ -248,7 +250,8 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString(),
         anthropicConfigured: !!process.env.ANTHROPIC_API_KEY,
         emailConfigured: !!process.env.MAILCHIMP_API_KEY,
-        emailService: process.env.EMAIL_SERVICE || 'mailchimp',
+        s3Configured: !!process.env.AWS_ACCESS_KEY_ID && !!process.env.AWS_SECRET_ACCESS_KEY,
+        emailService: 'mailchimp-with-s3-links',
         agents: 14,
         components: 'Book Research (optional), 11 Bible Study Agents, Student Guide, Leader Guide'
     });
@@ -289,7 +292,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`
 📖 Bible Study Curriculum Generator Started!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -299,12 +302,18 @@ app.listen(PORT, () => {
 
 🔑 Anthropic API:     ${process.env.ANTHROPIC_API_KEY ? '✅ Configured' : '❌ Not configured'}
 📧 Email Service:     ${process.env.MAILCHIMP_API_KEY ? '✅ Configured (Mailchimp)' : '❌ Not configured'}
+☁️  AWS S3:           ${process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY ? '✅ Configured' : '❌ Not configured'}
 🤖 AI Agents:         14 specialized agents (Book Research + 11 Bible Study + 2 Guides)
 
 ✝️  Ready to generate transformative Bible studies!
 Press Ctrl+C to stop
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `);
+
+    // Test S3 connection on startup
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+        await testS3Connection();
+    }
 });
 
 // Graceful shutdown
