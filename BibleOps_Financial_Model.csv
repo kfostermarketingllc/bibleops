@@ -1,0 +1,67 @@
+Scenario,Monthly Generations,Page Views Per User,Total Page Views,Effective Page Views (70%),AdSense RPM,AdSense Revenue,Newsletter Subscribers,Subscriber Conversion Rate,Newsletter Sponsor Revenue,Newsletter Affiliate Revenue,Total Newsletter Revenue,Total Monthly Revenue,AI Costs (Low),AI Costs (High),Infrastructure Costs,Total Costs (Low),Total Costs (High),Net Profit (Low),Net Profit (High),Revenue Per Generation,Cost Per Generation (Avg),Profit Per Generation (Avg)
+
+Current Model - Low Traffic,1000,4,4000,2800,$5.00,$14,600,60%,$48,$150,$198,$212,$500,$1000,$75,$575,$1075,-$363,-$863,$0.21,$0.79,-$0.58
+Current Model - Medium Traffic,5000,6,30000,21000,$5.00,$105,3000,60%,$240,$750,$990,$1095,$2500,$5000,$100,$2600,$5100,-$1505,-$4005,$0.22,$0.76,-$0.54
+Current Model - High Traffic,10000,8,80000,56000,$5.00,$280,6000,60%,$480,$1500,$1980,$2260,$5000,$10000,$150,$5150,$10150,-$2890,-$7890,$0.23,$0.76,-$0.53
+Current Model - Aggressive Traffic,50000,8,400000,280000,$5.00,$1400,30000,60%,$2400,$7500,$9900,$11300,$25000,$50000,$500,$25500,$50500,-$14200,-$39200,$0.23,$0.76,-$0.53
+
+Freemium Model - Year 1 (Month 3),300,6,1800,1260,$5.00,$6,180,60%,$14,$45,$59,$65,$150,$300,$75,$225,$375,-$160,-$310,$0.22,$0.83,-$0.62
+Freemium Model - Year 1 (Month 6),1000,6,6000,4200,$5.00,$21,600,60%,$48,$150,$198,$219,$500,$1000,$75,$575,$1075,-$356,-$856,$0.22,$0.79,-$0.57
+Freemium Model - Year 1 (Month 9),2500,6,15000,10500,$5.00,$53,1500,60%,$120,$375,$495,$548,$1250,$2500,$100,$1350,$2600,-$802,-$2052,$0.22,$0.79,-$0.57
+Freemium Model - Year 1 (Month 12),5000,6,30000,21000,$5.00,$105,3000,60%,$240,$750,$990,$1095,$2500,$5000,$100,$2600,$5100,-$1505,-$4005,$0.22,$0.76,-$0.54
+
+Freemium Model - Year 2 (Month 18),10000,8,80000,56000,$5.00,$280,6000,60%,$480,$1500,$1980,$2260,$5000,$10000,$150,$5150,$10150,-$2890,-$7890,$0.23,$0.76,-$0.53
+Freemium Model - Year 2 (Month 24),20000,8,160000,112000,$5.00,$560,12000,60%,$960,$3000,$3960,$4520,$10000,$20000,$200,$10200,$20200,-$5680,-$15680,$0.23,$0.76,-$0.53
+
+B2B Church Model - 50 Churches,2500,6,15000,10500,$5.00,$53,1500,60%,$120,$375,$495,$548,$1250,$2500,$100,$1350,$2600,$0,$0,$0.22,$0.79,$0.00
+B2B Church Model - 100 Churches,5000,6,30000,21000,$5.00,$105,3000,60%,$240,$750,$990,$1095,$2500,$5000,$100,$2600,$5100,$0,$0,$0.22,$0.76,$0.00
+B2B Church Model - 200 Churches,10000,8,80000,56000,$5.00,$280,6000,60%,$480,$1500,$1980,$2260,$5000,$10000,$150,$5150,$10150,$0,$0,$0.23,$0.76,$0.00
+B2B Church Model - 500 Churches,25000,8,200000,140000,$5.00,$700,15000,60%,$1200,$3750,$4950,$5650,$12500,$25000,$300,$12800,$25300,$0,$0,$0.23,$0.76,$0.00
+
+Paid Subscribers Added,Subscription Price,Monthly Recurring Revenue,Annual Recurring Revenue,,,,,,,,,,,,,,,,,,,
+
+B2B With Premium - 50 Churches,50,$149/year,$621,$7450,,,,,,,,,,,,,,,,,,,
+B2B With Premium - 50 Churches + 150 Individual,$12/month,$1800,$21600,,,,,,,,,,,,,,,,,,,,,
+B2B With Premium - Combined Revenue,,$2421,$29050,,,,,,,,,,,,,,,,,,,,,
+
+B2B With Premium - 200 Churches,200,$199/year,$3317,$39800,,,,,,,,,,,,,,,,,,,,,
+B2B With Premium - 200 Churches + 600 Individual,$12/month,$7200,$86400,,,,,,,,,,,,,,,,,,,,,
+B2B With Premium - Combined Revenue,,$10517,$126200,,,,,,,,,,,,,,,,,,,,,
+
+B2B With Premium - 500 Churches,500,$199/year,$8292,$99500,,,,,,,,,,,,,,,,,,,,,
+B2B With Premium - 500 Churches + 1500 Individual,$12/month,$18000,$216000,,,,,,,,,,,,,,,,,,,,,
+B2B With Premium - Combined Revenue,,$26292,$315500,,,,,,,,,,,,,,,,,,,,,
+
+Break-Even Analysis,,,,,,,,,,,,,,,,,,,,,,,
+
+Target: Break Even Per Generation,,,,,,,,,,,,,,,,,,,,,,,
+Required Revenue Per Generation,$0.75,,,,,,,,,,,,,,,,,,,,,
+Current Revenue Per Generation,$0.23,,,,,,,,,,,,,,,,,,,,,
+Revenue Gap,$0.52,,,,,,,,,,,,,,,,,,,,,
+Gap Multiple,3.3x,,,,,,,,,,,,,,,,,,,,,
+
+Path to Break-Even (Ad Model),,,,,,,,,,,,,,,,,,,,,,,
+Required Newsletter Revenue Per Generation,$0.73,,,,,,,,,,,,,,,,,,,,,
+Required Newsletter Revenue Per Subscriber Per Month,$1.22,,,,,,,,,,,,,,,,,,,,,
+Current Newsletter Revenue Per Subscriber Per Month,$0.25,,,,,,,,,,,,,,,,,,,,,
+Required Improvement,4.9x,,,,,,,,,,,,,,,,,,,,,
+
+Path to Break-Even (Freemium Model),,,,,,,,,,,,,,,,,,,,,,,
+Required Paid Conversion Rate,5%,,,,,,,,,,,,,,,,,,,,,,,
+At 10000 Free Users,500 paid,,,,,,,,,,,,,,,,,,,,,,,
+Monthly Subscription Revenue,$6000,,,,,,,,,,,,,,,,,,,,,
+Plus Ad/Newsletter Revenue,$2260,,,,,,,,,,,,,,,,,,,,,
+Total Revenue,$8260,,,,,,,,,,,,,,,,,,,,,
+Costs (10000 generations),$5150-$10150,,,,,,,,,,,,,,,,,,,,,
+Net Profit,-$1890 to $3110,,,,,,,,,,,,,,,,,,,,,
+Status,Approaching break-even,,,,,,,,,,,,,,,,,,,,,
+
+Path to Profitability (Freemium Model),,,,,,,,,,,,,,,,,,,,,,,
+Required Paid Subscribers,1000,,,,,,,,,,,,,,,,,,,,,
+At $12/month,$12000,,,,,,,,,,,,,,,,,,,,,
+Required Free Users (3% conversion),33333,,,,,,,,,,,,,,,,,,,,,
+Plus Ad/Newsletter Revenue,$7500,,,,,,,,,,,,,,,,,,,,,
+Total Revenue,$19500,,,,,,,,,,,,,,,,,,,,,
+Costs (33333 generations),$16667-$33333,,,,,,,,,,,,,,,,,,,,,
+Net Profit,-$13833 to $2833,,,,,,,,,,,,,,,,,,,,,
+Status,Marginal profitability at high scale,,,,,,,,,,,,,,,,,,,,,
