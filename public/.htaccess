@@ -1,14 +1,33 @@
 # BibleOps - Apache Configuration
 # This file should be uploaded to your Hostinger public_html directory
 
-# Force HTTPS
+# Enable URL rewriting
 RewriteEngine On
+
+# Force HTTPS
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Redirect www to non-www (or vice versa, depending on preference)
 RewriteCond %{HTTP_HOST} ^www\.bibleops\.com [NC]
 RewriteRule ^(.*)$ https://bibleops.com/$1 [L,R=301]
+
+# Remove trailing slashes (optional)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} (.+)/$
+RewriteRule ^ %1 [R=301,L]
+
+# Remove .html extension from URLs
+# If someone types example.com/privacy.html, redirect to example.com/privacy
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.html [NC]
+RewriteRule ^ %1 [R=301,L]
+
+# Route clean URLs to .html files
+# example.com/privacy -> privacy.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.*)$ $1.html [L]
 
 # Set default page
 DirectoryIndex index.html
