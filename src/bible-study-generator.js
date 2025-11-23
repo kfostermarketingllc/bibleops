@@ -218,7 +218,7 @@ function buildContext(formData) {
     const context = {
         // Study focus
         studyType: formData.studyFocus || 'passage', // 'passage', 'book', 'chapter', 'theme', 'book-study'
-        passage: formData.passage || formData.theme,
+        passage: formData.passage || formData.theme || null,
         theme: formData.theme,
 
         // Book information (if book-based study)

@@ -44,7 +44,15 @@ app.post('/api/generate', async (req, res) => {
             });
         }
 
-        if (!formData.studyFocus && !formData.passage && !formData.theme) {
+        // Validate study focus requirements
+        if (formData.studyFocus === 'book') {
+            // Book studies require title and author, passage is optional
+            if (!formData.bookTitle || !formData.bookAuthor) {
+                return res.status(400).json({
+                    error: 'Book studies require book title and author'
+                });
+            }
+        } else if (!formData.passage && !formData.theme) {
             return res.status(400).json({
                 error: 'Please specify either a Bible passage or a theme for study'
             });
