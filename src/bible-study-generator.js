@@ -73,11 +73,13 @@ async function generateBibleStudy(formData) {
         // Add foundation to context for all subsequent agents
         context.foundationDocument = foundationContent;
 
-        // Steps 3-14: Run all remaining agents in PARALLEL for speed
+        // Steps 3-14: Run agents in BATCHES to respect Anthropic rate limits
+        // Rate limit: 20,000 input tokens/min
+        // Strategy: 3 batches of 4 agents each, with 60-second delays between batches
         const agentCount = context.bookTitle ? '12' : '12';
-        console.log(`🚀 Running ${agentCount} agents in parallel...\n`);
+        console.log(`🚀 Running ${agentCount} agents in 3 batches (4 agents per batch)...\n`);
 
-        const parallelAgents = [
+        const allAgents = [
             {
                 agent: AGENTS.bibleVersion,
                 key: 'bibleVersion',
@@ -176,28 +178,50 @@ async function generateBibleStudy(formData) {
             }
         ];
 
-        // Execute all agents in parallel
-        const parallelResults = await Promise.all(
-            parallelAgents.map(async (agentConfig) => {
-                console.log(`${agentConfig.icon} Starting: ${agentConfig.name}...`);
-                const content = await callAgent(
-                    agentConfig.agent,
-                    context,
-                    foundationContent
-                );
-                const pdf = await generatePDF(
-                    content,
-                    agentConfig.title,
-                    agentConfig.filename,
-                    context
-                );
-                console.log(`✅ Completed: ${agentConfig.name}`);
-                return { key: agentConfig.key, pdf };
-            })
-        );
+        // Execute agents in batches with delays
+        const allResults = [];
+        const batchSize = 4;
+        const delayBetweenBatches = 65000; // 65 seconds (rate limit resets after 60s, add 5s buffer)
+
+        for (let i = 0; i < allAgents.length; i += batchSize) {
+            const batch = allAgents.slice(i, i + batchSize);
+            const batchNumber = Math.floor(i / batchSize) + 1;
+            const totalBatches = Math.ceil(allAgents.length / batchSize);
+
+            console.log(`📦 Batch ${batchNumber}/${totalBatches}: Processing ${batch.length} agents in parallel...`);
+
+            // Execute this batch in parallel
+            const batchResults = await Promise.all(
+                batch.map(async (agentConfig) => {
+                    console.log(`${agentConfig.icon} Starting: ${agentConfig.name}...`);
+                    const content = await callAgent(
+                        agentConfig.agent,
+                        context,
+                        foundationContent
+                    );
+                    const pdf = await generatePDF(
+                        content,
+                        agentConfig.title,
+                        agentConfig.filename,
+                        context
+                    );
+                    console.log(`✅ Completed: ${agentConfig.name}`);
+                    return { key: agentConfig.key, pdf };
+                })
+            );
+
+            allResults.push(...batchResults);
+            console.log(`✅ Batch ${batchNumber}/${totalBatches} complete!\n`);
+
+            // Wait before starting next batch (except after last batch)
+            if (i + batchSize < allAgents.length) {
+                console.log(`⏳ Waiting 65 seconds before next batch to respect rate limits...\n`);
+                await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
+            }
+        }
 
         // Add results to main results object
-        parallelResults.forEach(({ key, pdf }) => {
+        allResults.forEach(({ key, pdf }) => {
             results[key] = pdf;
         });
 
@@ -215,10 +239,16 @@ async function generateBibleStudy(formData) {
  * Build context object from form data
  */
 function buildContext(formData) {
+    // For book studies without a specific passage, use a placeholder
+    let passageValue = formData.passage || formData.theme || null;
+    if (!passageValue && formData.bookTitle) {
+        passageValue = `Scripture passages related to "${formData.bookTitle}"`;
+    }
+
     const context = {
         // Study focus
         studyType: formData.studyFocus || 'passage', // 'passage', 'book', 'chapter', 'theme', 'book-study'
-        passage: formData.passage || formData.theme || null,
+        passage: passageValue,
         theme: formData.theme,
 
         // Book information (if book-based study)
