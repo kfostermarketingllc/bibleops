@@ -81,9 +81,10 @@ app.post('/api/generate', async (req, res) => {
             // Collect all PDFs from result
             const pdfFiles = [];
             const pdfKeys = [
-                'foundation', 'bibleVersion', 'theology', 'biblicalContext',
+                'bookResearch', 'foundation', 'bibleVersion', 'theology', 'biblicalContext',
                 'hermeneutics', 'originalLanguages', 'crossReference',
-                'application', 'smallGroup', 'prayer', 'teachingMethods'
+                'application', 'smallGroup', 'prayer', 'teachingMethods',
+                'studentGuide', 'leaderGuide'
             ];
 
             for (const key of pdfKeys) {
@@ -172,7 +173,8 @@ app.get('/api/health', (req, res) => {
         anthropicConfigured: !!process.env.ANTHROPIC_API_KEY,
         emailConfigured: !!process.env.MAILCHIMP_API_KEY,
         emailService: process.env.EMAIL_SERVICE || 'mailchimp',
-        agents: 11
+        agents: 14,
+        components: 'Book Research (optional), 11 Bible Study Agents, Student Guide, Leader Guide'
     });
 });
 
@@ -221,7 +223,7 @@ app.listen(PORT, () => {
 
 🔑 Anthropic API:     ${process.env.ANTHROPIC_API_KEY ? '✅ Configured' : '❌ Not configured'}
 📧 Email Service:     ${process.env.MAILCHIMP_API_KEY ? '✅ Configured (Mailchimp)' : '❌ Not configured'}
-🤖 AI Agents:         11 specialized Bible study agents
+🤖 AI Agents:         14 specialized agents (Book Research + 11 Bible Study + 2 Guides)
 
 ✝️  Ready to generate transformative Bible studies!
 Press Ctrl+C to stop

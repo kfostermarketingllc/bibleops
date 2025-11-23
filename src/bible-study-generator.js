@@ -34,12 +34,33 @@ async function generateBibleStudy(formData) {
         // Build context object for all agents
         const context = buildContext(formData);
 
-        // Step 1: FOUNDATION AGENT (runs first!)
-        console.log('📚 Agent 1/11: Foundational Materials & Reference Specialist');
+        // Step 1: BOOK RESEARCH AGENT (if book study)
+        let bookResearchContent = null;
+        if (context.bookTitle) {
+            console.log('📖 Agent 1/14: Book Research & Analysis Specialist');
+            bookResearchContent = await callAgent(
+                AGENTS.bookResearch,
+                context,
+                null
+            );
+            results.bookResearch = await generatePDF(
+                bookResearchContent,
+                'Book Research & Analysis',
+                `book_research_${timestamp}.pdf`,
+                context
+            );
+            console.log('✅ Book research complete\n');
+
+            // Add book research to context for all subsequent agents
+            context.bookResearchDocument = bookResearchContent;
+        }
+
+        // Step 2: FOUNDATION AGENT (runs after book research if applicable)
+        console.log(`📚 Agent ${context.bookTitle ? '2/14' : '1/14'}: Foundational Materials & Reference Specialist`);
         const foundationContent = await callAgent(
             AGENTS.foundation,
             context,
-            null // No previous foundation yet
+            bookResearchContent // Pass book research if available
         );
         results.foundation = await generatePDF(
             foundationContent,
@@ -52,8 +73,9 @@ async function generateBibleStudy(formData) {
         // Add foundation to context for all subsequent agents
         context.foundationDocument = foundationContent;
 
-        // Steps 2-11: Run all remaining agents in PARALLEL for speed
-        console.log('🚀 Running 10 agents in parallel...\n');
+        // Steps 3-14: Run all remaining agents in PARALLEL for speed
+        const agentCount = context.bookTitle ? '12' : '12';
+        console.log(`🚀 Running ${agentCount} agents in parallel...\n`);
 
         const parallelAgents = [
             {
@@ -135,6 +157,22 @@ async function generateBibleStudy(formData) {
                 filename: `teaching_${timestamp}.pdf`,
                 icon: '👨‍🏫',
                 name: 'Teaching Methods'
+            },
+            {
+                agent: AGENTS.studentStudyGuide,
+                key: 'studentGuide',
+                title: 'Student Study Guide',
+                filename: `student_guide_${timestamp}.pdf`,
+                icon: '📝',
+                name: 'Student Study Guide'
+            },
+            {
+                agent: AGENTS.leaderGuide,
+                key: 'leaderGuide',
+                title: "Leader's Guide",
+                filename: `leader_guide_${timestamp}.pdf`,
+                icon: '👥',
+                name: "Leader's Guide"
             }
         ];
 
@@ -163,7 +201,8 @@ async function generateBibleStudy(formData) {
             results[key] = pdf;
         });
 
-        console.log('🎉 ALL 11 AGENTS COMPLETED SUCCESSFULLY!\n');
+        const totalAgents = context.bookTitle ? 14 : 13;
+        console.log(`🎉 ALL ${totalAgents} AGENTS COMPLETED SUCCESSFULLY!\n`);
         return results;
 
     } catch (error) {
@@ -178,9 +217,15 @@ async function generateBibleStudy(formData) {
 function buildContext(formData) {
     const context = {
         // Study focus
-        studyType: formData.studyFocus || 'passage', // 'passage', 'book', 'chapter', 'theme'
+        studyType: formData.studyFocus || 'passage', // 'passage', 'book', 'chapter', 'theme', 'book-study'
         passage: formData.passage || formData.theme,
         theme: formData.theme,
+
+        // Book information (if book-based study)
+        bookTitle: formData.bookTitle || null,
+        bookAuthor: formData.bookAuthor || null,
+        bookISBN: formData.bookISBN || null,
+        bookISBN13: formData.bookISBN13 || null,
 
         // User specifications
         email: formData.email,
@@ -201,8 +246,9 @@ function buildContext(formData) {
         groupSize: formData.groupSize || 'Small group (8-12 people)',
         teachingContext: formData.teachingContext || 'Small group Bible study',
 
-        // Will be populated after foundation agent runs
-        foundationDocument: null
+        // Will be populated after agents run
+        foundationDocument: null,
+        bookResearchDocument: null
     };
 
     // Determine testament based on passage (simple heuristic)
@@ -227,21 +273,39 @@ function buildContext(formData) {
 /**
  * Call an AI agent with the given context
  */
-async function callAgent(agent, context, foundationDocument) {
+async function callAgent(agent, context, previousDocument) {
     try {
         const systemPrompt = agent.systemPrompt;
         let userPrompt = agent.generatePrompt(context);
 
-        // If foundation document exists and this isn't the foundation agent, include it
-        if (foundationDocument && agent.name !== 'Foundational Materials & Reference Specialist') {
-            userPrompt = `FOUNDATIONAL FRAMEWORK (created by Foundation Agent):
-${foundationDocument}
+        // Build context from previous agents
+        let contextPrefix = '';
+
+        // Include book research if available and not the book research agent
+        if (context.bookResearchDocument && agent.name !== 'Book Research & Analysis Specialist') {
+            contextPrefix += `BOOK RESEARCH & ANALYSIS (created by Book Research Agent):
+${context.bookResearchDocument}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-${userPrompt}
+`;
+        }
 
-IMPORTANT: Ensure your output embodies the principles established in the Foundational Framework above.`;
+        // Include foundation if available and not the foundation agent
+        if (context.foundationDocument && agent.name !== 'Foundational Materials & Reference Specialist') {
+            contextPrefix += `FOUNDATIONAL FRAMEWORK (created by Foundation Agent):
+${context.foundationDocument}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+        }
+
+        // If we have context to include
+        if (contextPrefix) {
+            userPrompt = `${contextPrefix}${userPrompt}
+
+IMPORTANT: Ensure your output embodies the principles established in the documents above${context.bookTitle ? ', integrating the book analysis with Scripture' : ''}.`;
         }
 
         const response = await anthropic.messages.create({
