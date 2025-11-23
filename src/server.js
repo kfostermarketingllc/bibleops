@@ -29,6 +29,7 @@ const generationStatus = new Map();
 /**
  * POST /api/generate
  * Generate complete Bible study curriculum based on form data
+ * NOW ASYNC: Returns immediately, processes in background, sends email when done
  */
 app.post('/api/generate', async (req, res) => {
     try {
@@ -76,15 +77,64 @@ app.post('/api/generate', async (req, res) => {
             });
         }
 
-        // Generate Bible study curriculum (this will take 5-8 minutes)
-        console.log('🤖 Starting AI generation of 11 specialized agents...');
+        // Generate unique job ID
+        const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+        console.log(`✅ Request validated. Job ID: ${jobId}`);
+        console.log(`📧 Will email results to: ${formData.email}`);
+
+        // Return immediately - processing will happen in background
+        res.json({
+            success: true,
+            jobId: jobId,
+            message: 'Your Bible study curriculum is being generated. You will receive an email shortly.',
+            email: formData.email,
+            estimatedTime: formData.studyFocus === 'book' ? '8-12 minutes' : '6-10 minutes'
+        });
+
+        // Process generation in background (don't await)
+        processGenerationInBackground(jobId, formData);
+
+    } catch (error) {
+        console.error('❌ Error validating request:', error);
+        res.status(500).json({
+            error: 'Failed to process request',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * Background processing function
+ * Generates curriculum and sends email without blocking the API response
+ */
+async function processGenerationInBackground(jobId, formData) {
+    try {
+        console.log(`\n🚀 [${jobId}] Starting background generation...`);
+
+        // Update status
+        generationStatus.set(jobId, {
+            status: 'generating',
+            startTime: new Date(),
+            email: formData.email
+        });
+
+        // Generate Bible study curriculum (this will take 6-10 minutes)
+        console.log(`🤖 [${jobId}] Starting AI generation of 14 specialized agents...`);
         const result = await generateBibleStudy(formData);
 
-        console.log('✅ Bible study generation complete!');
+        console.log(`✅ [${jobId}] Bible study generation complete!`);
+
+        // Update status
+        generationStatus.set(jobId, {
+            status: 'sending_email',
+            startTime: generationStatus.get(jobId).startTime,
+            email: formData.email
+        });
 
         // Send email with PDFs
         try {
-            console.log('📧 Preparing to send curriculum email...');
+            console.log(`📧 [${jobId}] Preparing to send curriculum email...`);
 
             // Collect all PDFs from result
             const pdfFiles = [];
@@ -111,7 +161,7 @@ app.post('/api/generate', async (req, res) => {
                 }
             }
 
-            console.log(`📦 Found ${pdfFiles.length} PDFs to send`);
+            console.log(`📦 [${jobId}] Found ${pdfFiles.length} PDFs to send`);
 
             // Send email
             const emailResult = await sendCurriculumEmail({
@@ -121,27 +171,44 @@ app.post('/api/generate', async (req, res) => {
                 pdfs: pdfFiles
             });
 
-            console.log('✅ Email sent successfully!');
-            result.emailSent = true;
-            result.emailStatus = emailResult;
+            console.log(`✅ [${jobId}] Email sent successfully to ${formData.email}!`);
+
+            // Update final status
+            generationStatus.set(jobId, {
+                status: 'completed',
+                startTime: generationStatus.get(jobId).startTime,
+                completedTime: new Date(),
+                email: formData.email,
+                emailSent: true
+            });
 
         } catch (emailError) {
-            console.error('❌ Failed to send email:', emailError);
-            result.emailSent = false;
-            result.emailError = emailError.message;
-            // Don't fail the whole request if email fails
+            console.error(`❌ [${jobId}] Failed to send email:`, emailError);
+
+            // Update status with error
+            generationStatus.set(jobId, {
+                status: 'email_failed',
+                startTime: generationStatus.get(jobId).startTime,
+                completedTime: new Date(),
+                email: formData.email,
+                emailSent: false,
+                error: emailError.message
+            });
         }
 
-        res.json(result);
-
     } catch (error) {
-        console.error('❌ Error generating Bible study:', error);
-        res.status(500).json({
-            error: 'Failed to generate Bible study curriculum',
-            message: error.message
+        console.error(`❌ [${jobId}] Error in background generation:`, error);
+
+        // Update status with error
+        generationStatus.set(jobId, {
+            status: 'failed',
+            startTime: generationStatus.get(jobId)?.startTime || new Date(),
+            completedTime: new Date(),
+            email: formData.email,
+            error: error.message
         });
     }
-});
+}
 
 /**
  * GET /api/download/:filename
@@ -162,8 +229,9 @@ app.get('/api/download/:filename', (req, res) => {
 });
 
 /**
- * GET /api/status/:id
- * Check generation status (for future async implementation)
+ * GET /api/status/:jobId
+ * Check generation status for async processing
+ * Returns: { status: 'generating' | 'sending_email' | 'completed' | 'failed' | 'not_found', ... }
  */
 app.get('/api/status/:id', (req, res) => {
     const id = req.params.id;
