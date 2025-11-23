@@ -25,6 +25,12 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Store generation status
 const generationStatus = new Map();
 
+// Track active background jobs
+const activeJobs = new Set();
+
+// Shutdown flag
+let isShuttingDown = false;
+
 // API Routes
 
 /**
@@ -34,6 +40,15 @@ const generationStatus = new Map();
  */
 app.post('/api/generate', async (req, res) => {
     try {
+        // Reject new requests if server is shutting down
+        if (isShuttingDown) {
+            return res.status(503).json({
+                error: 'Server is shutting down for maintenance',
+                message: 'Please try again in a few moments',
+                retryAfter: 60
+            });
+        }
+
         console.log('📖 Received Bible study generation request');
         console.log('Form Data:', JSON.stringify(req.body, null, 2));
 
@@ -93,8 +108,15 @@ app.post('/api/generate', async (req, res) => {
             estimatedTime: formData.studyFocus === 'book' ? '8-12 minutes' : '6-10 minutes'
         });
 
+        // Track this job as active
+        activeJobs.add(jobId);
+
         // Process generation in background (don't await)
-        processGenerationInBackground(jobId, formData);
+        processGenerationInBackground(jobId, formData)
+            .finally(() => {
+                // Remove from active jobs when done
+                activeJobs.delete(jobId);
+            });
 
     } catch (error) {
         console.error('❌ Error validating request:', error);
@@ -246,14 +268,16 @@ app.get('/api/status/:id', (req, res) => {
  */
 app.get('/api/health', (req, res) => {
     res.json({
-        status: 'healthy',
+        status: isShuttingDown ? 'shutting_down' : 'healthy',
         timestamp: new Date().toISOString(),
         anthropicConfigured: !!process.env.ANTHROPIC_API_KEY,
         emailConfigured: !!process.env.MAILCHIMP_API_KEY,
         s3Configured: !!process.env.AWS_ACCESS_KEY_ID && !!process.env.AWS_SECRET_ACCESS_KEY,
         emailService: 'mailchimp-with-s3-links',
         agents: 14,
-        components: 'Book Research (optional), 11 Bible Study Agents, Student Guide, Leader Guide'
+        components: 'Book Research (optional), 11 Bible Study Agents, Student Guide, Leader Guide',
+        activeJobs: activeJobs.size,
+        isShuttingDown: isShuttingDown
     });
 });
 
@@ -316,10 +340,42 @@ Press Ctrl+C to stop
     }
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('🛑 SIGTERM received, shutting down gracefully...');
-    process.exit(0);
+// Graceful shutdown - wait for active jobs to complete
+process.on('SIGTERM', async () => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+
+    console.log('🛑 SIGTERM received, checking for active jobs...');
+
+    if (activeJobs.size === 0) {
+        console.log('✅ No active jobs, shutting down immediately');
+        process.exit(0);
+    }
+
+    console.log(`⏳ Waiting for ${activeJobs.size} active job(s) to complete: ${Array.from(activeJobs).join(', ')}`);
+    console.log('   This may take 5-10 minutes. Server will remain available for new requests.');
+
+    // Wait for all active jobs to complete (max 15 minutes)
+    const maxWaitTime = 15 * 60 * 1000; // 15 minutes
+    const startTime = Date.now();
+
+    const checkInterval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+
+        if (activeJobs.size === 0) {
+            console.log('✅ All jobs completed, shutting down gracefully');
+            clearInterval(checkInterval);
+            process.exit(0);
+        } else if (elapsedTime >= maxWaitTime) {
+            console.log(`⚠️ Timeout reached (15 minutes), forcing shutdown with ${activeJobs.size} jobs still running`);
+            clearInterval(checkInterval);
+            process.exit(0);
+        } else {
+            const remainingJobs = Array.from(activeJobs);
+            const timeRemaining = Math.round((maxWaitTime - elapsedTime) / 1000 / 60);
+            console.log(`⏳ Still waiting for ${activeJobs.size} job(s): ${remainingJobs.slice(0, 3).join(', ')}${remainingJobs.length > 3 ? '...' : ''} (${timeRemaining} min remaining)`);
+        }
+    }, 30000); // Check every 30 seconds
 });
 
 module.exports = app;
