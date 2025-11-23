@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - BibleOps Premium</title>
+    <link rel="stylesheet" href="/premium/css/premium-styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Navigation -->
+        <nav class="dashboard-nav">
+            <div class="nav-brand">
+                <svg width="40" height="40" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="16" y="12" width="28" height="36" rx="2" fill="#1a2332" stroke="#1a2332" stroke-width="2"/>
+                    <rect x="19" y="15" width="22" height="30" rx="1" fill="#ffffff"/>
+                    <line x1="23" y1="22" x2="37" y2="22" stroke="#1a2332" stroke-width="1.5"/>
+                    <line x1="23" y1="27" x2="37" y2="27" stroke="#1a2332" stroke-width="1.5"/>
+                    <line x1="23" y1="32" x2="34" y2="32" stroke="#1a2332" stroke-width="1.5"/>
+                    <rect x="29" y="12" width="2" height="8" fill="#2c5282"/>
+                </svg>
+                <span>BibleOps <span class="premium-badge-small">Premium</span></span>
+            </div>
+            <div class="nav-user">
+                <span id="userEmail">Loading...</span>
+                <button id="logoutBtn" class="btn-secondary btn-small">Log Out</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="dashboard-content">
+            <!-- Usage Stats -->
+            <section class="usage-stats">
+                <h2>Your Usage This Month</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="usageCount">-</div>
+                            <div class="stat-label">of 4 included</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="daysRemaining">-</div>
+                            <div class="stat-label">days until reset</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="overageCount">-</div>
+                            <div class="stat-label">overage charges</div>
+                        </div>
+                    </div>
+                    <div class="stat-card status-card">
+                        <div class="stat-icon">✓</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="subscriptionStatus">Active</div>
+                            <div class="stat-label">subscription status</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Generate New Curriculum -->
+            <section class="generate-section">
+                <h2>Generate New Curriculum</h2>
+                <div class="generate-card">
+                    <form id="generateForm" class="curriculum-form">
+                        <!-- Study Focus -->
+                        <div class="form-group">
+                            <label for="studyFocus">Study Focus</label>
+                            <select id="studyFocus" name="studyFocus" required>
+                                <option value="passage">Bible Passage</option>
+                                <option value="theme">Thematic Study</option>
+                                <option value="book">Book Study</option>
+                            </select>
+                        </div>
+
+                        <!-- Passage (shown for passage focus) -->
+                        <div class="form-group" id="passageGroup">
+                            <label for="passage">Bible Passage</label>
+                            <input
+                                type="text"
+                                id="passage"
+                                name="passage"
+                                placeholder="e.g., John 3:16-21, Romans 8, Psalm 23"
+                            >
+                        </div>
+
+                        <!-- Theme (shown for theme focus) -->
+                        <div class="form-group" id="themeGroup" style="display: none;">
+                            <label for="theme">Theme</label>
+                            <input
+                                type="text"
+                                id="theme"
+                                name="theme"
+                                placeholder="e.g., Faith, Forgiveness, Prayer, Love"
+                            >
+                        </div>
+
+                        <!-- Book (shown for book focus) -->
+                        <div id="bookGroup" style="display: none;">
+                            <div class="form-group">
+                                <label for="bookTitle">Book Title</label>
+                                <input type="text" id="bookTitle" name="bookTitle" placeholder="e.g., Mere Christianity">
+                            </div>
+                            <div class="form-group">
+                                <label for="bookAuthor">Author</label>
+                                <input type="text" id="bookAuthor" name="bookAuthor" placeholder="e.g., C.S. Lewis">
+                            </div>
+                        </div>
+
+                        <!-- Denomination -->
+                        <div class="form-group">
+                            <label for="denomination">Denomination</label>
+                            <select id="denomination" name="denomination" required>
+                                <option value="">Select your denomination</option>
+                                <option value="baptist">Baptist</option>
+                                <option value="methodist">Methodist</option>
+                                <option value="presbyterian">Presbyterian</option>
+                                <option value="lutheran">Lutheran</option>
+                                <option value="catholic">Catholic</option>
+                                <option value="anglican">Anglican/Episcopal</option>
+                                <option value="pentecostal">Pentecostal/Charismatic</option>
+                                <option value="nondenominational">Non-denominational</option>
+                                <option value="reformed">Reformed</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Bible Version -->
+                        <div class="form-group">
+                            <label for="bibleVersion">Preferred Bible Version</label>
+                            <select id="bibleVersion" name="bibleVersion" required>
+                                <option value="">Select version</option>
+                                <option value="NIV">NIV (New International Version)</option>
+                                <option value="ESV">ESV (English Standard Version)</option>
+                                <option value="NKJV">NKJV (New King James Version)</option>
+                                <option value="KJV">KJV (King James Version)</option>
+                                <option value="NLT">NLT (New Living Translation)</option>
+                                <option value="NASB">NASB (New American Standard)</option>
+                                <option value="CSB">CSB (Christian Standard Bible)</option>
+                                <option value="MSG">MSG (The Message)</option>
+                            </select>
+                        </div>
+
+                        <!-- Age Group -->
+                        <div class="form-group">
+                            <label for="ageGroup">Target Age Group</label>
+                            <select id="ageGroup" name="ageGroup" required>
+                                <option value="">Select age group</option>
+                                <option value="children">Children (Ages 6-12)</option>
+                                <option value="youth">Youth (Ages 13-18)</option>
+                                <option value="college">College/Young Adults (Ages 18-25)</option>
+                                <option value="adult">Adults (Ages 25+)</option>
+                                <option value="seniors">Seniors (Ages 60+)</option>
+                                <option value="mixed">Mixed Ages</option>
+                            </select>
+                        </div>
+
+                        <div id="formError" class="error-message" style="display: none;"></div>
+                        <div id="formSuccess" class="success-message" style="display: none;"></div>
+
+                        <button type="submit" class="btn-primary btn-large" id="generateBtn">
+                            Generate Curriculum
+                        </button>
+
+                        <p class="form-note" id="overageNote" style="display: none;">
+                            ⚠️ You've used your 4 included curricula. This generation will cost $4.99.
+                        </p>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Generation History -->
+            <section class="history-section">
+                <h2>Recent Curricula</h2>
+                <div id="historyList" class="history-list">
+                    <p class="loading">Loading your history...</p>
+                </div>
+            </section>
+
+            <!-- Account Management -->
+            <section class="account-section">
+                <h2>Account Settings</h2>
+                <div class="settings-grid">
+                    <div class="setting-card">
+                        <h3>Subscription</h3>
+                        <p>Manage your subscription and billing</p>
+                        <button id="manageSubscriptionBtn" class="btn-secondary">Manage Subscription</button>
+                    </div>
+                    <div class="setting-card">
+                        <h3>Email</h3>
+                        <p id="accountEmail">Loading...</p>
+                        <button id="changeEmailBtn" class="btn-secondary">Change Email</button>
+                    </div>
+                    <div class="setting-card">
+                        <h3>Password</h3>
+                        <p>Update your password</p>
+                        <button id="changePasswordBtn" class="btn-secondary">Change Password</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="/premium/js/premium-app.js"></script>
+    <script src="/premium/js/dashboard.js"></script>
+</body>
+</html>
