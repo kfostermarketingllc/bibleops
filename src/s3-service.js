@@ -1,11 +1,11 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const fs = require('fs');
 const path = require('path');
 
 /**
  * AWS S3 Service for BibleOps
- * Handles PDF upload and generates presigned URLs with 14-day expiration
+ * Handles PDF upload and generates presigned URLs with 7-day expiration (AWS maximum)
  */
 
 // Initialize S3 Client
@@ -18,7 +18,7 @@ const s3Client = new S3Client({
 });
 
 const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || 'bibleops-pdfs';
-const PRESIGNED_URL_EXPIRATION = 14 * 24 * 60 * 60; // 14 days in seconds
+const PRESIGNED_URL_EXPIRATION = 7 * 24 * 60 * 60; // 7 days in seconds (AWS maximum for SigV4)
 
 /**
  * Upload a PDF file to S3
@@ -58,18 +58,17 @@ async function uploadPDFToS3(filePath, s3Key) {
 /**
  * Generate a presigned URL for downloading a file
  * @param {string} s3Key - S3 object key
- * @param {number} expiresIn - Expiration time in seconds (default: 14 days)
+ * @param {number} expiresIn - Expiration time in seconds (default: 7 days)
  * @returns {Promise<string>} - Presigned URL
  */
 async function generatePresignedUrl(s3Key, expiresIn = PRESIGNED_URL_EXPIRATION) {
     try {
-        const command = new PutObjectCommand({
+        // Use GetObjectCommand for download URLs (not PutObjectCommand)
+        const command = new GetObjectCommand({
             Bucket: BUCKET_NAME,
             Key: s3Key
         });
 
-        // Note: We use PutObjectCommand for presigning GET requests
-        // This is correct - AWS SDK v3 uses this approach
         const url = await getSignedUrl(s3Client, command, {
             expiresIn: expiresIn
         });

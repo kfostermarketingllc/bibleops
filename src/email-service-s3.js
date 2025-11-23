@@ -50,7 +50,7 @@ async function sendCurriculumEmailWithLinks({ toEmail, passage, theme, pdfs = []
 
         const studyFocus = bookTitle || passage || theme || 'Bible Study';
         const expirationDate = new Date();
-        expirationDate.setDate(expirationDate.getDate() + 14);
+        expirationDate.setDate(expirationDate.getDate() + 7); // 7 days (AWS maximum for presigned URLs)
         const formattedExpiration = expirationDate.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -193,8 +193,8 @@ async function sendCurriculumEmailWithLinks({ toEmail, passage, theme, pdfs = []
             </div>
 
             <div class="expiration-notice">
-                <p><strong>⏰ Important:</strong> Download links expire on <strong>${formattedExpiration}</strong> (14 days)</p>
-                <p style="margin-bottom: 0;">Please download all files within the next 14 days. After that, you'll need to generate a new curriculum.</p>
+                <p><strong>⏰ Important:</strong> Download links expire on <strong>${formattedExpiration}</strong> (7 days)</p>
+                <p style="margin-bottom: 0;">Please download all files within the next 7 days. After that, you'll need to generate a new curriculum.</p>
             </div>
 
             <h2>📥 Download Your Study Materials</h2>
@@ -259,8 +259,8 @@ Study Focus: ${studyFocus}
 Materials Generated: ${pdfsWithLinks.length} specialized study guides
 AI Agents: 14 specialized agents powered by Claude 3.7 Sonnet
 
-⏰ IMPORTANT: Download links expire on ${formattedExpiration} (14 days)
-Please download all files within the next 14 days.
+⏰ IMPORTANT: Download links expire on ${formattedExpiration} (7 days)
+Please download all files within the next 7 days.
 
 📥 Download Your Study Materials:
 
