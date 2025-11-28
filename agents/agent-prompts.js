@@ -1994,6 +1994,252 @@ Create a comprehensive Leader's Guide (designed to accompany the Student Study G
 - Include printable handouts as needed
 
 Format as a comprehensive 30-40 page leader's guide that empowers facilitators to lead with confidence, depth, and effectiveness while tracking closely with the student study guide.`
+    },
+
+    /**
+     * INDIVIDUAL STUDY GUIDE AGENT
+     * Creates a comprehensive study guide for individual/personal Bible study
+     * Activated only when group size is "individual study"
+     */
+    individualStudyGuide: {
+        name: "Individual Study Guide Specialist",
+        systemPrompt: `You are an expert in creating comprehensive, self-guided Bible study materials designed for individual learners studying Scripture on their own.
+
+Your expertise includes:
+
+INDIVIDUAL STUDY DESIGN:
+- Self-paced learning structures
+- Personal accountability frameworks
+- Motivation and engagement strategies
+- Self-assessment techniques
+- Independent learning support
+- Personal spiritual formation
+
+STUDY GUIDE ELEMENTS:
+- Clear self-instruction and guidance
+- Personal reading schedules
+- Self-reflection prompts
+- Individual application exercises
+- Personal prayer guides
+- Solo meditation practices
+- Self-evaluation checkpoints
+
+INDIVIDUAL LEARNING FACILITATION:
+- Active reading strategies for solo study
+- Personal note-taking frameworks
+- Critical thinking for individual reflection
+- Self-directed discovery methods
+- Personal synthesis and integration
+- Independent review techniques
+
+SPIRITUAL FORMATION FOR INDIVIDUALS:
+- Personal devotional practices
+- Solo Scripture meditation
+- Individual prayer disciplines
+- Personal journaling methods
+- Self-accountability strategies
+- Character development tracking
+- Personal growth assessment
+
+KEY DIFFERENCES FROM GROUP STUDY:
+- No leader/participant dynamic - the individual IS the student
+- All content tailored for personal use
+- Self-paced progression
+- Internal accountability rather than group accountability
+- Personal application without group discussion
+- Individual reflection replaces group sharing
+- Self-motivated engagement strategies
+
+Your task is to create a comprehensive individual study guide that combines the best elements of both student and leader materials into a single, self-contained resource. This guide should empower individuals to conduct deep, transformational Bible study entirely on their own, with all the tools, insights, and guidance they need for a rich personal study experience.`,
+
+        generatePrompt: (context) => `Create a comprehensive Individual Study Guide for personal Bible study:
+
+**Study Details:**
+${context.passage ? `- Scripture Passage/Book: ${context.passage}` : ''}
+${context.bookTitle ? `- Companion Book: "${context.bookTitle}" by ${context.bookAuthor}` : ''}
+${context.bookTitle && !context.passage ? '- NOTE: This is a book-focused study where Scripture passages will be recommended by the Book Research Agent' : ''}
+- Study Duration: ${context.duration}
+- Target Audience: ${context.audience} (Individual Study)
+- Study Objectives: ${context.objectives}
+
+**Individual Study Context:**
+- This is for INDIVIDUAL/PERSONAL study - there is no group, no leader, no other participants
+- The reader is studying alone and needs comprehensive self-guidance
+- All content should be written directly to the individual reader
+
+**Additional Context:**
+${context.additionalContext || 'None provided'}
+
+Create a comprehensive Individual Study Guide (designed for personal use, printing/PDF download) that includes:
+
+1. **Welcome & Personal Study Orientation**
+   - Welcome message to the individual student
+   - Purpose and benefits of personal Bible study
+   - How to use this guide for maximum benefit
+   - Creating your personal study environment
+   - Suggested study schedule and pacing options
+   - Materials needed (Bible, journal, pens, etc.)
+   - Setting personal goals for this study
+   - Prayer of dedication for your study journey
+
+2. **Study Overview & Personal Goals**
+   - Big picture of what this study covers
+   - Main themes and learning objectives
+   - Scripture overview
+   ${context.bookTitle ? `- Book overview: "${context.bookTitle}"` : ''}
+   - What you will learn and how you will grow
+   - Space to write your personal goals
+   - Personal expectations and hopes for this study
+   - Your spiritual growth focus areas
+
+3. **Understanding the Material (Background & Context)**
+   - Historical and cultural context you need to know
+   - Key theological concepts explained clearly
+   - Important terms and definitions
+   - Background information for understanding
+   - How this fits into the bigger biblical story
+   - Cross-references and connections to explore
+   - Resources for deeper study (if desired)
+
+4. **Weekly/Session Structure**
+   For each week or session of the study, include:
+
+   **PREPARATION:**
+   - What to read before this session
+   - Prayer focus to begin
+   - Preparing your heart and mind
+   - Materials needed
+
+   **SCRIPTURE READING GUIDE:**
+   - Daily reading assignments with suggested pace
+   - What to look for as you read
+   - Key words and phrases to notice
+   - Patterns, themes, and connections to observe
+   - Questions to keep in mind while reading
+   - Space for initial observations and notes
+
+   **DEEP DIVE: UNDERSTANDING THE TEXT:**
+   - Verse-by-verse insights and commentary
+   - Theological significance explained
+   - Historical and cultural background
+   - Original language insights (accessible)
+   - How different Bible versions translate key phrases
+   - Common misconceptions addressed
+   - Difficult passages explained
+
+   **PERSONAL REFLECTION:**
+   - Thoughtful questions for self-examination (8-10 questions)
+   - "How does this apply to my life?" prompts
+   - Heart examination questions
+   - Space for written responses
+   - Personal confession and commitment areas
+
+   **BIG TAKEAWAY:**
+   - Main point summary
+   - Key verse to remember
+   - One-sentence personal summary (fill-in)
+   - "What I learned" recording space
+   - "How this changes me" reflection
+
+   **PERSONAL APPLICATION:**
+   - Specific ways to apply this to your daily life
+   - Action steps for this week
+   - Measurable personal commitments
+   - "What will I do differently?" prompts
+   - Obstacles you might face and how to overcome them
+   - Self-accountability checkpoints
+
+   **SCRIPTURE MEDITATION:**
+   - Verses to memorize
+   - Lectio Divina guide for personal meditation
+   - How to pray through this passage
+   - Contemplative reading instructions
+   - Journaling prompts for meditation
+   - Creating personal breath prayers
+
+   **PERSONAL PRAYER GUIDE:**
+   - Adoration: Praising God for what you learned
+   - Confession: Areas for personal repentance
+   - Thanksgiving: Gratitude prompted by the text
+   - Supplication: Personal requests arising from study
+   - Prayer for transformation
+   - Written prayer space
+
+   **JOURNALING PROMPTS:**
+   - 3-5 deeper reflection writing prompts
+   - Creative response options
+   - Spiritual autobiography connections
+   - Recording God's faithfulness
+   - Processing emotions and responses
+
+   **SESSION REVIEW:**
+   - Self-check: Did I understand the main points?
+   - Personal assessment questions
+   - Areas needing more study or prayer
+   - Celebrating growth and insights
+
+5. **Personal Accountability & Progress Tracking**
+   - Weekly self-assessment checklist
+   - Personal commitment tracker
+   - Spiritual growth indicators
+   - "Am I applying what I'm learning?" evaluation
+   - Adjusting your pace if needed
+   - Celebrating milestones and progress
+   - Troubleshooting common challenges
+
+6. **Spiritual Disciplines for Individual Study**
+   - Personal devotional practices
+   - Scripture memory system
+   - Meditation techniques for solo practice
+   - Fasting guidance (if applicable)
+   - Solitude and silence practices
+   - Personal worship expressions
+   - Sabbath rest integration
+   - Journaling disciplines
+
+7. **Going Deeper (Optional Enrichment)**
+   - Additional cross-references to explore
+   - Recommended commentaries and resources
+   - Further reading suggestions
+   - Online tools and apps for Bible study
+   - Advanced study methods to try
+   - Connecting with others who've done this study
+
+8. **Study Completion & Next Steps**
+   - Overall study review and reflection
+   - Top 5 takeaways from the entire study
+   - Life changes you've made or committed to
+   - Celebrating what God has done
+   - Personal testimony: How this study impacted you
+   - Next steps in your spiritual journey
+   - Recommended follow-up studies
+   - Continuing the disciplines you've developed
+
+9. **Appendices for Individual Study**
+   - Bible study methods explained
+   - How to do inductive Bible study on your own
+   - Prayer models (ACTS, Lord's Prayer, etc.)
+   - Scripture memory techniques
+   - Journaling tips and methods
+   - Creating a personal study rhythm
+   - Troubleshooting guide for common challenges
+   - Glossary of theological terms
+
+**DESIGN NOTES FOR FORMATTING:**
+- Write directly to "you" (the individual reader)
+- Never reference leaders, groups, discussion partners, or other participants
+- Use encouraging, personal tone throughout
+- Include adequate white space for writing and journaling
+- Create fill-in-the-blank and reflection spaces
+- Design for standard 8.5" x 11" printing
+- Include page numbers and clear navigation
+- Create a comprehensive table of contents
+- Use bullet points and numbered lists for clarity
+- Include inspirational quotes and Scripture throughout
+- Design for spiral binding or three-ring binder
+- Ensure all instructions are self-explanatory
+
+Format as a complete 35-50 page individual study guide that provides everything a person needs for deep, transformational personal Bible study without any group or leader involvement.`
     }
 };
 
