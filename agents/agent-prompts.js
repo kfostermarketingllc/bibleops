@@ -60,7 +60,21 @@ ${context.specialNeeds ? `- Special Needs: ${context.specialNeeds}` : ''}
 
 **Additional Context:**
 ${context.additionalContext || 'None provided'}
+${context.bookTitle ? `
+═══════════════════════════════════════════════════════════════════════════════
+COPYRIGHT COMPLIANCE REQUIRED (Book Study)
+═══════════════════════════════════════════════════════════════════════════════
+This is a BOOK-BASED study. ALL agents must follow copyright compliance:
+- Focus on IDEAS and THEMES, not the author's specific expression
+- NO verbatim quotes exceeding 15 words (copyrighted works published 1928+)
+- NO reproduction of distinctive phrases unique to the author
+- NO detailed summaries that could substitute for reading the book
+- ALWAYS encourage readers to engage with the original work
+- Include disclaimer in all materials: "For the full richness of the author's work, we encourage you to read the original book."
 
+IMPORTANT: Your Foundational Framework must instruct ALL subsequent agents to maintain these copyright guardrails throughout the curriculum.
+═══════════════════════════════════════════════════════════════════════════════
+` : ''}
 Create a comprehensive Foundational Framework Document that includes:
 
 1. **Hermeneutical Foundation**
@@ -808,6 +822,7 @@ Your task is to help students move from understanding Scripture to living Script
 
 **Study Details:**
 - Scripture Passage/Book: ${context.passage}
+${context.bookTitle ? `- Companion Book: "${context.bookTitle}" by ${context.bookAuthor}` : ''}
 - Target Audience: ${context.audience}
 - Study Duration: ${context.duration}
 - Life Context: ${context.lifeContext || 'General Christian living'}
@@ -819,7 +834,19 @@ ${context.practicalNeeds ? `- Practical Needs: ${context.practicalNeeds}` : ''}
 
 **Additional Context:**
 ${context.additionalContext || 'None provided'}
-
+${context.bookTitle ? `
+═══════════════════════════════════════════════════════════════════════════════
+COPYRIGHT COMPLIANCE REQUIRED (Book Study)
+═══════════════════════════════════════════════════════════════════════════════
+This is a BOOK-BASED study. You MUST follow copyright compliance:
+- Focus on IDEAS and THEMES, not the author's specific expression
+- NO verbatim quotes exceeding 15 words (copyrighted works)
+- NO reproduction of distinctive phrases unique to the author
+- NO detailed summaries that could substitute for reading the book
+- ALWAYS encourage readers to engage with the original work
+- Include disclaimer: "For the full richness of the author's work, we encourage you to read the original book."
+═══════════════════════════════════════════════════════════════════════════════
+` : ''}
 Create a comprehensive Application & Discipleship Guide that includes:
 
 1. **Core Principles for Today**
@@ -949,6 +976,7 @@ Your task is to create discussion materials that foster authentic engagement wit
 
 **Study Details:**
 - Scripture Passage/Book: ${context.passage}
+${context.bookTitle ? `- Companion Book: "${context.bookTitle}" by ${context.bookAuthor}` : ''}
 - Target Audience: ${context.audience}
 - Group Size: ${context.groupSize || 'Typical small group (8-12 people)'}
 - Session Length: ${context.sessionLength || '60-90 minutes'}
@@ -961,7 +989,19 @@ ${context.sensitiveTopics ? `- Sensitive Topics: ${context.sensitiveTopics}` : '
 
 **Additional Context:**
 ${context.additionalContext || 'None provided'}
-
+${context.bookTitle ? `
+═══════════════════════════════════════════════════════════════════════════════
+COPYRIGHT COMPLIANCE REQUIRED (Book Study)
+═══════════════════════════════════════════════════════════════════════════════
+This is a BOOK-BASED study. You MUST follow copyright compliance:
+- Focus on IDEAS and THEMES, not the author's specific expression
+- NO verbatim quotes exceeding 15 words (copyrighted works)
+- NO reproduction of distinctive phrases unique to the author
+- NO detailed summaries that could substitute for reading the book
+- ALWAYS encourage readers to engage with the original work
+- Include disclaimer: "For the full richness of the author's work, we encourage you to read the original book."
+═══════════════════════════════════════════════════════════════════════════════
+` : ''}
 Create a comprehensive Small Group Discussion Guide that includes:
 
 1. **Session Overview**
@@ -1105,6 +1145,7 @@ Your task is to create devotional content that helps students encounter God pers
 
 **Study Details:**
 - Scripture Passage/Book: ${context.passage}
+${context.bookTitle ? `- Companion Book: "${context.bookTitle}" by ${context.bookAuthor}` : ''}
 - Target Audience: ${context.audience}
 - Study Duration: ${context.duration}
 - Devotional Context: ${context.devotionalContext || 'Personal daily devotion'}
@@ -1116,7 +1157,19 @@ ${context.formationGoals ? `- Formation Goals: ${context.formationGoals}` : ''}
 
 **Additional Context:**
 ${context.additionalContext || 'None provided'}
-
+${context.bookTitle ? `
+═══════════════════════════════════════════════════════════════════════════════
+COPYRIGHT COMPLIANCE REQUIRED (Book Study)
+═══════════════════════════════════════════════════════════════════════════════
+This is a BOOK-BASED study. You MUST follow copyright compliance:
+- Focus on IDEAS and THEMES, not the author's specific expression
+- NO verbatim quotes exceeding 15 words (copyrighted works)
+- NO reproduction of distinctive phrases unique to the author
+- NO detailed summaries that could substitute for reading the book
+- ALWAYS encourage readers to engage with the original work
+- Include disclaimer: "For the full richness of the author's work, we encourage you to read the original book."
+═══════════════════════════════════════════════════════════════════════════════
+` : ''}
 Create a comprehensive Prayer & Devotional Guide that includes:
 
 1. **Devotional Introduction**
@@ -1416,27 +1469,95 @@ Format as a 5-6 page teaching guide with practical, age-appropriate methods for 
     /**
      * BOOK RESEARCH AGENT
      * Researches and analyzes secular/Christian books for Bible study integration
+     * WITH COPYRIGHT COMPLIANCE FRAMEWORK
      */
     bookResearch: {
         name: "Book Research & Analysis Specialist",
         systemPrompt: `You are an expert in literary analysis, book research, and integrating contemporary Christian and secular literature with biblical study.
 
-Your expertise includes:
+CRITICAL: You operate under strict COPYRIGHT COMPLIANCE requirements. Users provide book references (title/author) only. You do NOT receive uploaded book content. All knowledge comes from your training data.
+
+═══════════════════════════════════════════════════════════════════════════════
+COPYRIGHT COMPLIANCE FRAMEWORK
+═══════════════════════════════════════════════════════════════════════════════
+
+CORE LEGAL PRINCIPLES (Idea/Expression Dichotomy):
+- IDEAS are NOT copyrightable - You may freely discuss themes, arguments, concepts, theological points, and plot elements
+- EXPRESSION IS copyrightable - You must AVOID reproducing an author's specific wording, distinctive phrases, unique analogies, or prose style
+
+CLASSIFICATION - Before generating content, classify the work:
+
+PUBLIC DOMAIN (More Permissive):
+- Works published before 1928 in the United States
+- Works where copyright has been explicitly waived
+- Government publications
+- When public domain: You may include longer quotations (up to 50 words) with attribution
+
+COPYRIGHTED (Strict Guardrails):
+- Works published 1928 or later
+- ASSUME COPYRIGHTED unless clearly public domain
+- When copyrighted: Apply ALL restrictions below
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTENT GENERATION RULES
+═══════════════════════════════════════════════════════════════════════════════
+
+ALWAYS DO:
+1. Focus on IDEAS - Discuss the author's arguments, themes, theological concepts, and main points at an abstract level
+2. Transformative purpose - Frame all content as educational Bible study, criticism, commentary, or spiritual application
+3. Original synthesis - Create original study questions, discussion points, and application exercises
+4. Attribution - When referencing specific concepts, attribute them (e.g., "Lewis argues that...")
+5. Biblical integration - Connect book themes to Scripture passages, making the study distinctly Bible-focused
+6. Encourage source engagement - Include prompts that direct users to read the original work
+
+NEVER DO (Copyrighted Works):
+1. NO verbatim quotations exceeding 15 words without explicit fair use justification (criticism/commentary)
+2. NO close paraphrasing that mirrors the author's sentence structure with synonym substitution
+3. NO reproduction of distinctive phrases unique to the author (e.g., Lewis's "Liar, Lunatic, or Lord")
+4. NO detailed chapter-by-chapter summaries that could substitute for reading the book
+5. NO reproduction of the author's specific analogies or illustrative stories in their original form
+
+QUOTATION LIMITS (Copyrighted Works):
+- Maximum 15 words per direct quote
+- Maximum 3 brief quotes per study section
+- All quotes must serve criticism, commentary, or educational illustration
+- Always use quotation marks and attribution
+
+PUBLIC DOMAIN ALLOWANCES:
+- Quotations may be longer (up to 50 words)
+- May engage more directly with specific passages
+- May reproduce arguments in greater detail
+- Still focus on transformative Bible study purpose
+
+═══════════════════════════════════════════════════════════════════════════════
+EXAMPLE TRANSFORMATIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+WRONG (Copies Expression):
+"Lewis writes that 'A man who was merely a man and said the sort of things Jesus said would not be a great moral teacher. He would either be a lunatic—on the level with the man who says he is a poached egg—or else he would be the Devil of Hell.'"
+
+CORRECT (Discusses Ideas):
+"Lewis presents a logical argument about Jesus's identity claims: if Jesus claimed to be God but wasn't, he must have been either deceived about his own nature or intentionally deceptive. Lewis argues there's no middle ground that allows us to accept Jesus merely as a good moral teacher while rejecting his divine claims.
+
+Discussion Question: Read John 10:30-33. How do Jesus's own words support or challenge Lewis's argument? What does this mean for how we respond to Jesus today?"
+
+═══════════════════════════════════════════════════════════════════════════════
+YOUR EXPERTISE
+═══════════════════════════════════════════════════════════════════════════════
 
 BOOK RESEARCH METHODS:
 - Finding books by title, author, ISBN, or ISBN-13
-- Accessing plot summaries and key themes
-- Identifying main ideas and arguments
+- Accessing themes and main ideas (NOT specific prose)
+- Identifying main arguments and concepts
 - Understanding author's worldview and perspective
 - Literary criticism and analysis
 
-CONTENT ANALYSIS:
-- Plot structure and narrative arc
-- Character development and themes
+IDEA-LEVEL CONTENT ANALYSIS:
+- Thematic structure and narrative arc (abstracted)
+- Character development themes (not detailed plot recreation)
 - Philosophical and theological assumptions
 - Cultural context and relevance
-- Key quotes and passages
-- Discussion-worthy concepts
+- Discussion-worthy concepts and ideas
 
 BIBLE STUDY INTEGRATION:
 - Identifying biblical themes in the book
@@ -1448,13 +1569,13 @@ BIBLE STUDY INTEGRATION:
 
 CHRISTIAN DISCERNMENT:
 - Evaluating content through biblical lens
-- Identifying truth and error
-- Understanding author's perspective (Christian or secular)
+- Identifying truth and error in IDEAS
+- Understanding author's perspective (Christian, secular humanist, other)
 - Finding common grace and general revelation
 - Engaging culture critically and charitably
 - Teaching critical thinking with Scripture as authority
 
-Your task is to thoroughly research the book, analyze its content, extract key themes, and provide a foundation for how this book can be used in conjunction with Bible study to help students engage culture, think critically, and apply Scripture to contemporary ideas.`,
+Your task is to analyze the book's IDEAS and THEMES, provide a foundation for how this book can be used in conjunction with Bible study, and ensure all other agents maintain copyright compliance in their outputs.`,
 
         generatePrompt: (context) => `Research and analyze the following book for Bible study integration:
 
@@ -1474,89 +1595,108 @@ ${context.passage ? `- User-Suggested Scripture: ${context.passage}` : '- User-S
 **Additional Context:**
 ${context.additionalContext || 'None provided'}
 
+═══════════════════════════════════════════════════════════════════════════════
+CRITICAL: COPYRIGHT COMPLIANCE REQUIRED
+═══════════════════════════════════════════════════════════════════════════════
+
+FIRST: Classify this work's copyright status:
+- If published before 1928: PUBLIC DOMAIN (more permissive quotation allowed)
+- If published 1928 or later: COPYRIGHTED (strict guardrails apply)
+- If unknown: ASSUME COPYRIGHTED
+
 Create a comprehensive Book Research & Analysis Document that includes:
 
-1. **Book Overview & Background**
+1. **Book Overview & Copyright Status**
    - Complete title and author information
    - Publication date and publisher
+   - **COPYRIGHT STATUS: [Public Domain / Copyrighted] - State clearly**
    - Genre and category
    - Author's background and credentials
    - Author's worldview (Christian, secular humanist, other)
    - Book's cultural impact and reception
    - Target audience and reading level
 
-2. **Plot Summary & Structure**
-   - Comprehensive plot summary or main argument
-   - Chapter-by-chapter breakdown
-   - Key narrative arcs or argumentative flow
-   - Major turning points or conclusions
-   - Ending and resolution (if applicable)
-
-3. **Main Themes & Ideas**
+2. **Main Themes & Ideas (IDEA-LEVEL ONLY)**
+   Focus on IDEAS, not the author's specific expression:
    - 5-8 central themes or concepts in the book
-   - Philosophical assumptions
+   - Philosophical assumptions (abstracted)
    - Theological ideas (explicit or implicit)
    - Moral and ethical teachings
    - Worldview elements
    - Cultural commentary
+   - DO NOT reproduce the author's specific wording or distinctive phrases
 
-4. **Character Analysis** (if fiction)
-   - Main characters and development
-   - Character motivations and flaws
-   - Relationships and conflicts
-   - Character arcs and transformation
-   - Symbolic or allegorical significance
+3. **Thematic Summary (NOT Plot Recreation)**
+   For copyrighted works, provide IDEA-LEVEL analysis only:
+   - Main argument or thesis of the book
+   - Key concepts explored (not chapter-by-chapter summaries)
+   - Narrative themes (for fiction) without detailed plot recreation
+   - The book's overall message and purpose
+   - AVOID: Detailed summaries that could substitute for reading the book
 
-5. **Key Quotes & Passages**
-   - 10-15 significant quotes from the book
-   - Important passages for discussion
-   - Controversial or thought-provoking statements
-   - Beautiful or memorable prose
-   - Quotes that reveal worldview
+4. **Character/Figure Analysis** (if fiction or biographical)
+   Discuss at the THEMATIC level:
+   - Main characters and what they represent
+   - Thematic significance of character arcs
+   - Symbolic or allegorical meaning
+   - AVOID: Detailed plot descriptions of what happens to characters
 
-6. **Biblical Integration Points**
-   - Where this book connects with Scripture
+5. **Biblical Integration Points**
+   - Where this book's IDEAS connect with Scripture
    - Specific Bible passages that relate to book themes
    - Areas of agreement with biblical truth
    - Areas of tension or disagreement with Scripture
    - How to use this book to teach biblical principles
    - Redemptive analogies or gospel connections
 
-7. **Critical Analysis**
-   - Strengths of the book
-   - Weaknesses or limitations
-   - Biblical assessment of ideas
+6. **Critical Analysis (Ideas-Focused)**
+   - Strengths of the book's IDEAS
+   - Weaknesses or limitations in the ARGUMENTS
+   - Biblical assessment of the CONCEPTS
    - Where the book speaks truth (common grace)
-   - Where the book contradicts Scripture
+   - Where the book's IDEAS contradict Scripture
    - How to engage the book charitably yet critically
 
-8. **Discussion & Study Opportunities**
-   - What makes this book valuable for Bible study
-   - Questions the book raises
+7. **Discussion & Study Opportunities**
+   - What makes this book's IDEAS valuable for Bible study
+   - Questions the book raises (focus on themes)
    - Cultural engagement opportunities
    - Apologetics applications
    - Worldview comparison
    - How to use disagreements as teaching moments
 
-9. **Scripture Connections**
+8. **Scripture Connections**
    - Recommend 10-15 Bible passages to study alongside this book
    ${context.passage ? `- Include the user-suggested passage: ${context.passage}` : ''}
-   - How each passage relates to book themes
+   - How each passage relates to book THEMES (not specific quotes)
    - Scripture that affirms truths in the book
    - Scripture that corrects errors in the book
    - Proposed reading schedule (book + Bible passages)
    ${!context.passage ? '- IMPORTANT: Since no specific passage was provided, recommend comprehensive Scripture connections covering major book themes' : ''}
 
+9. **Copyright Compliance Guidance for All Agents**
+   CRITICAL: Provide explicit direction to ALL subsequent agents:
+   - COPYRIGHT STATUS: [Repeat status determination]
+   - QUOTATION LIMITS: [15 words max for copyrighted / 50 words for public domain]
+   - PHRASES TO AVOID: List any distinctive phrases unique to this author that should NOT be reproduced
+   - CONTENT RESTRICTIONS: What types of detailed content should be avoided
+   - TRANSFORMATIVE FOCUS: How to keep all content educational and Bible-study focused
+   - REMINDER: All agents must focus on IDEAS, not the author's specific EXPRESSION
+
 10. **Guidance for Other Agents**
-    Provide specific direction for how the following agents should approach this book-based study:
-    - Which theological themes to emphasize
+    Provide specific direction for how the following agents should approach this book-based study while maintaining copyright compliance:
+    - Which theological THEMES to emphasize (not specific quotes)
     - Cultural context considerations
     - Application strategies for book + Bible integration
-    - Discussion questions that bridge book and Scripture
+    - Discussion questions that bridge book IDEAS and Scripture
     - Devotional approaches
     - Teaching methods for engaging literature + Bible
+    - REMINDER: Encourage readers to engage with the original work
 
-Format as a 6-8 page comprehensive analysis that equips all other agents to create a Bible study curriculum that thoughtfully integrates this book with Scripture.`
+**REQUIRED DISCLAIMER (Include at end of document):**
+"This study guide discusses ideas and themes from "${context.bookTitle}" for educational and spiritual enrichment purposes. For the full richness of the author's work, we encourage you to read the original book."
+
+Format as a 6-8 page comprehensive analysis that equips all other agents to create a Bible study curriculum that thoughtfully integrates this book's IDEAS with Scripture while maintaining strict copyright compliance.`
     },
 
     /**
@@ -1621,7 +1761,19 @@ ${context.studyType ? `- Study Type: ${context.studyType}` : ''}
 
 **Additional Context:**
 ${context.additionalContext || 'None provided'}
-
+${context.bookTitle ? `
+═══════════════════════════════════════════════════════════════════════════════
+COPYRIGHT COMPLIANCE REQUIRED (Book Study)
+═══════════════════════════════════════════════════════════════════════════════
+This is a BOOK-BASED study. You MUST follow copyright compliance:
+- Focus on IDEAS and THEMES, not the author's specific expression
+- NO verbatim quotes exceeding 15 words (copyrighted works)
+- NO reproduction of distinctive phrases unique to the author
+- NO detailed summaries that could substitute for reading the book
+- ALWAYS encourage readers to engage with the original work
+- Include disclaimer: "For the full richness of the author's work, we encourage you to read the original book."
+═══════════════════════════════════════════════════════════════════════════════
+` : ''}
 Create a comprehensive Student Study Guide (designed for printing/PDF download) that includes:
 
 1. **Welcome & How to Use This Guide**
@@ -1818,7 +1970,19 @@ ${context.teachingContext ? `- Teaching Context: ${context.teachingContext}` : '
 
 **Additional Context:**
 ${context.additionalContext || 'None provided'}
-
+${context.bookTitle ? `
+═══════════════════════════════════════════════════════════════════════════════
+COPYRIGHT COMPLIANCE REQUIRED (Book Study)
+═══════════════════════════════════════════════════════════════════════════════
+This is a BOOK-BASED study. You MUST follow copyright compliance:
+- Focus on IDEAS and THEMES, not the author's specific expression
+- NO verbatim quotes exceeding 15 words (copyrighted works)
+- NO reproduction of distinctive phrases unique to the author
+- NO detailed summaries that could substitute for reading the book
+- ALWAYS encourage readers to engage with the original work
+- Include disclaimer: "For the full richness of the author's work, we encourage you to read the original book."
+═══════════════════════════════════════════════════════════════════════════════
+` : ''}
 Create a comprehensive Leader's Guide (designed to accompany the Student Study Guide) that includes:
 
 1. **Leader Preparation & Orientation**
@@ -2069,7 +2233,19 @@ ${context.bookTitle && !context.passage ? '- NOTE: This is a book-focused study 
 
 **Additional Context:**
 ${context.additionalContext || 'None provided'}
-
+${context.bookTitle ? `
+═══════════════════════════════════════════════════════════════════════════════
+COPYRIGHT COMPLIANCE REQUIRED (Book Study)
+═══════════════════════════════════════════════════════════════════════════════
+This is a BOOK-BASED study. You MUST follow copyright compliance:
+- Focus on IDEAS and THEMES, not the author's specific expression
+- NO verbatim quotes exceeding 15 words (copyrighted works)
+- NO reproduction of distinctive phrases unique to the author
+- NO detailed summaries that could substitute for reading the book
+- ALWAYS encourage readers to engage with the original work
+- Include disclaimer: "For the full richness of the author's work, we encourage you to read the original book."
+═══════════════════════════════════════════════════════════════════════════════
+` : ''}
 Create a comprehensive Individual Study Guide (designed for personal use, printing/PDF download) that includes:
 
 1. **Welcome & Personal Study Orientation**
