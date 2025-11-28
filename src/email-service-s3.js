@@ -37,9 +37,10 @@ async function uploadPDFsToS3(pdfs) {
  * @param {string} params.theme - Study theme
  * @param {Array} params.pdfs - Array of PDF file objects {name, title, path, buffer}
  * @param {string} params.bookTitle - Book title (if book study)
+ * @param {string} params.groupSize - Group size (if 'individual study', adjusts email content)
  * @returns {Promise} - Mailchimp response
  */
-async function sendCurriculumEmailWithLinks({ toEmail, passage, theme, pdfs = [], bookTitle = null }) {
+async function sendCurriculumEmailWithLinks({ toEmail, passage, theme, pdfs = [], bookTitle = null, groupSize = null }) {
     try {
         console.log(`📧 Preparing curriculum email with S3 links for: ${toEmail}`);
         console.log(`📦 Uploading ${pdfs.length} PDFs to S3...`);
@@ -47,6 +48,9 @@ async function sendCurriculumEmailWithLinks({ toEmail, passage, theme, pdfs = []
         // Upload all PDFs to S3 and get download URLs
         const pdfsWithLinks = await uploadPDFsToS3(pdfs);
         console.log(`✅ All ${pdfs.length} PDFs uploaded to S3`);
+
+        // Check if this is an individual study
+        const isIndividualStudy = groupSize && groupSize.toLowerCase().includes('individual');
 
         const studyFocus = bookTitle || passage || theme || 'Bible Study';
         const expirationDate = new Date();
@@ -219,8 +223,12 @@ async function sendCurriculumEmailWithLinks({ toEmail, passage, theme, pdfs = []
                 <li><strong>Download All PDFs:</strong> Click each download button above to save all materials</li>
                 <li><strong>Start with Foundational Materials:</strong> Review the overview and framework first</li>
                 <li><strong>Explore Specialized Guides:</strong> Dive deep into context, theology, and application</li>
-                <li><strong>Use the Study Guides:</strong> Student and Leader guides provide structured learning</li>
-                <li><strong>Prepare Your Teaching:</strong> Leverage the teaching methods and discussion guides</li>
+                ${isIndividualStudy
+                    ? `<li><strong>Use Your Individual Study Guide:</strong> Your comprehensive personal study guide provides everything you need for self-paced learning</li>
+                <li><strong>Follow the Personal Application:</strong> Work through reflection questions and journaling prompts at your own pace</li>`
+                    : `<li><strong>Use the Study Guides:</strong> Student and Leader guides provide structured learning</li>
+                <li><strong>Prepare Your Teaching:</strong> Leverage the teaching methods and discussion guides</li>`
+                }
             </ol>
 
             <div class="highlight">
@@ -270,8 +278,12 @@ ${pdfsWithLinks.map((pdf, i) => `${i + 1}. ${pdf.title}\n   Download: ${pdf.down
 1. Download All PDFs: Use the links above to save all materials
 2. Start with Foundational Materials: Review the overview and framework first
 3. Explore Specialized Guides: Dive deep into context, theology, and application
-4. Use the Study Guides: Student and Leader guides provide structured learning
-5. Prepare Your Teaching: Leverage the teaching methods and discussion guides
+${isIndividualStudy
+    ? `4. Use Your Individual Study Guide: Your comprehensive personal study guide provides everything you need for self-paced learning
+5. Follow the Personal Application: Work through reflection questions and journaling prompts at your own pace`
+    : `4. Use the Study Guides: Student and Leader guides provide structured learning
+5. Prepare Your Teaching: Leverage the teaching methods and discussion guides`
+}
 
 💡 Pro Tip: Save all PDFs to a dedicated folder on your device for easy access.
 

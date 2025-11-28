@@ -75,11 +75,14 @@ async function generateBibleStudy(formData) {
 
         // Steps 3-14: Run agents in BATCHES to respect Anthropic rate limits
         // Rate limit: 20,000 input tokens/min
-        // Strategy: 3 batches of 4 agents each, with 60-second delays between batches
-        const agentCount = context.bookTitle ? '12' : '12';
-        console.log(`🚀 Running ${agentCount} agents in 3 batches (4 agents per batch)...\n`);
+        // Strategy: batches of 4 agents each, with 60-second delays between batches
 
-        const allAgents = [
+        // Check if this is an individual study (no group/leader dynamic)
+        const isIndividualStudy = context.groupSize &&
+            context.groupSize.toLowerCase().includes('individual');
+
+        // Base agents that apply to all study types
+        const baseAgents = [
             {
                 agent: AGENTS.bibleVersion,
                 key: 'bibleVersion',
@@ -137,20 +140,24 @@ async function generateBibleStudy(formData) {
                 name: 'Application'
             },
             {
-                agent: AGENTS.discussion,
-                key: 'smallGroup',
-                title: 'Small Group Discussion Guide',
-                filename: `discussion_${timestamp}.pdf`,
-                icon: '💬',
-                name: 'Small Group Discussion'
-            },
-            {
                 agent: AGENTS.devotional,
                 key: 'prayer',
                 title: 'Prayer & Devotional Guide',
                 filename: `devotional_${timestamp}.pdf`,
                 icon: '🙏',
                 name: 'Prayer & Devotional'
+            }
+        ];
+
+        // Agents specific to group study (leader + participants)
+        const groupStudyAgents = [
+            {
+                agent: AGENTS.discussion,
+                key: 'smallGroup',
+                title: 'Small Group Discussion Guide',
+                filename: `discussion_${timestamp}.pdf`,
+                icon: '💬',
+                name: 'Small Group Discussion'
             },
             {
                 agent: AGENTS.teaching,
@@ -177,6 +184,31 @@ async function generateBibleStudy(formData) {
                 name: "Leader's Guide"
             }
         ];
+
+        // Agent specific to individual study (replaces group study agents)
+        const individualStudyAgents = [
+            {
+                agent: AGENTS.individualStudyGuide,
+                key: 'individualGuide',
+                title: 'Individual Study Guide',
+                filename: `individual_study_guide_${timestamp}.pdf`,
+                icon: '📖',
+                name: 'Individual Study Guide'
+            }
+        ];
+
+        // Select appropriate agents based on study type
+        const allAgents = isIndividualStudy
+            ? [...baseAgents, ...individualStudyAgents]
+            : [...baseAgents, ...groupStudyAgents];
+
+        if (isIndividualStudy) {
+            console.log('📖 Individual study detected - using Individual Study Guide agent');
+        }
+
+        const totalBatchAgents = allAgents.length;
+        const totalBatches = Math.ceil(totalBatchAgents / 4);
+        console.log(`🚀 Running ${totalBatchAgents} agents in ${totalBatches} batches (4 agents per batch)...\n`);
 
         // Execute agents in batches with delays
         const allResults = [];
@@ -225,7 +257,8 @@ async function generateBibleStudy(formData) {
             results[key] = pdf;
         });
 
-        const totalAgents = context.bookTitle ? 14 : 13;
+        // Calculate total agents: foundation (1) + book research (0 or 1) + batch agents
+        const totalAgents = 1 + (context.bookTitle ? 1 : 0) + totalBatchAgents;
         console.log(`🎉 ALL ${totalAgents} AGENTS COMPLETED SUCCESSFULLY!\n`);
         return results;
 

@@ -192,7 +192,8 @@ async function processGenerationInBackground(jobId, formData) {
                 passage: formData.passage,
                 theme: formData.theme,
                 bookTitle: formData.bookTitle,
-                pdfs: pdfFiles
+                pdfs: pdfFiles,
+                groupSize: formData.groupSize
             });
 
             console.log(`✅ [${jobId}] Email sent successfully to ${formData.email}!`);
