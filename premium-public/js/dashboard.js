@@ -107,22 +107,28 @@ function setupEventListeners() {
         }
     });
 
-    // Study focus change
-    document.getElementById('studyFocus').addEventListener('change', (e) => {
-        const focus = e.target.value;
+    // Study focus change (radio buttons)
+    const studyFocusRadios = document.querySelectorAll('input[name="studyFocus"]');
+    studyFocusRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const focus = e.target.value;
 
-        // Show/hide relevant fields
-        document.getElementById('passageGroup').style.display = focus === 'passage' ? 'block' : 'none';
-        document.getElementById('themeGroup').style.display = focus === 'theme' ? 'block' : 'none';
-        document.getElementById('bookGroup').style.display = focus === 'book' ? 'block' : 'none';
+            // Show/hide relevant fields
+            document.getElementById('passageGroup').style.display = focus === 'passage' ? 'block' : 'none';
+            document.getElementById('themeGroup').style.display = focus === 'theme' ? 'block' : 'none';
+            document.getElementById('bookGroup').style.display = focus === 'book' ? 'block' : 'none';
 
-        // Clear hidden fields
-        if (focus !== 'passage') document.getElementById('passage').value = '';
-        if (focus !== 'theme') document.getElementById('theme').value = '';
-        if (focus !== 'book') {
-            document.getElementById('bookTitle').value = '';
-            document.getElementById('bookAuthor').value = '';
-        }
+            // Clear hidden fields
+            if (focus !== 'passage') document.getElementById('passage').value = '';
+            if (focus !== 'theme') document.getElementById('theme').value = '';
+            if (focus !== 'book') {
+                document.getElementById('bookTitle').value = '';
+                document.getElementById('bookAuthor').value = '';
+                document.getElementById('bookISBN').value = '';
+                document.getElementById('bookISBN13').value = '';
+                document.getElementById('bookPassage').value = '';
+            }
+        });
     });
 
     // Generate form submission
@@ -172,16 +178,27 @@ async function handleGenerate(e) {
     formError.style.display = 'none';
     formSuccess.style.display = 'none';
 
-    // Get form data
+    // Get study focus from radio buttons
+    const studyFocusRadio = document.querySelector('input[name="studyFocus"]:checked');
+    const studyFocus = studyFocusRadio ? studyFocusRadio.value : 'passage';
+
+    // Get form data - matching free tool exactly
     const formData = {
-        studyFocus: document.getElementById('studyFocus').value,
+        studyFocus: studyFocus,
         passage: document.getElementById('passage').value,
         theme: document.getElementById('theme').value,
         bookTitle: document.getElementById('bookTitle').value,
         bookAuthor: document.getElementById('bookAuthor').value,
+        bookISBN: document.getElementById('bookISBN').value,
+        bookISBN13: document.getElementById('bookISBN13').value,
+        bookPassage: document.getElementById('bookPassage').value,
         denomination: document.getElementById('denomination').value,
         bibleVersion: document.getElementById('bibleVersion').value,
-        ageGroup: document.getElementById('ageGroup').value
+        ageGroup: document.getElementById('ageGroup').value,
+        duration: document.getElementById('duration').value,
+        userThoughts: document.getElementById('userThoughts').value,
+        groupSize: document.getElementById('groupSize').value,
+        teachingContext: document.getElementById('teachingContext').value
     };
 
     // Validate based on study focus

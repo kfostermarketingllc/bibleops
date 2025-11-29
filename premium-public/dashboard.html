@@ -41,7 +41,7 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon">📅</div>
+                        <div class="stat-icon">🔄</div>
                         <div class="stat-info">
                             <div class="stat-value" id="daysRemaining">-</div>
                             <div class="stat-label">days until reset</div>
@@ -71,94 +71,224 @@
                     <form id="generateForm" class="curriculum-form">
                         <!-- Study Focus -->
                         <div class="form-group">
-                            <label for="studyFocus">Study Focus</label>
-                            <select id="studyFocus" name="studyFocus" required>
-                                <option value="passage">Bible Passage</option>
-                                <option value="theme">Thematic Study</option>
-                                <option value="book">Book Study</option>
-                            </select>
+                            <label>Study Focus</label>
+                            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; cursor: pointer;">
+                                <input type="radio" name="studyFocus" value="passage" checked>
+                                <span>
+                                    <strong>Specific Passage</strong>
+                                    <small style="display: block; color: #64748b;">Book, chapter, or verses</small>
+                                </span>
+                            </label>
+                            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; cursor: pointer;">
+                                <input type="radio" name="studyFocus" value="theme">
+                                <span>
+                                    <strong>Biblical Theme</strong>
+                                    <small style="display: block; color: #64748b;">Topic or theological concept</small>
+                                </span>
+                            </label>
+                            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; cursor: pointer;">
+                                <input type="radio" name="studyFocus" value="book">
+                                <span>
+                                    <strong>Book Study</strong>
+                                    <small style="display: block; color: #64748b;">Integrate a book with Scripture</small>
+                                </span>
+                            </label>
                         </div>
 
                         <!-- Passage (shown for passage focus) -->
                         <div class="form-group" id="passageGroup">
-                            <label for="passage">Bible Passage</label>
+                            <label for="passage">Bible Passage *</label>
                             <input
                                 type="text"
                                 id="passage"
                                 name="passage"
-                                placeholder="e.g., John 3:16-21, Romans 8, Psalm 23"
+                                placeholder="e.g., Romans 8:1-17, Psalm 23, John 3, Ephesians"
+                                required
                             >
+                            <small>Enter any book, chapter, or specific verse range</small>
                         </div>
 
                         <!-- Theme (shown for theme focus) -->
                         <div class="form-group" id="themeGroup" style="display: none;">
-                            <label for="theme">Theme</label>
+                            <label for="theme">Biblical Theme *</label>
                             <input
                                 type="text"
                                 id="theme"
                                 name="theme"
-                                placeholder="e.g., Faith, Forgiveness, Prayer, Love"
+                                placeholder="e.g., Grace, Faith, Prayer, God's Character, Discipleship"
                             >
+                            <small>Enter the central theme or topic for this study</small>
                         </div>
 
                         <!-- Book (shown for book focus) -->
                         <div id="bookGroup" style="display: none;">
                             <div class="form-group">
-                                <label for="bookTitle">Book Title</label>
-                                <input type="text" id="bookTitle" name="bookTitle" placeholder="e.g., Mere Christianity">
+                                <label for="bookTitle">Book Title *</label>
+                                <input type="text" id="bookTitle" name="bookTitle" placeholder="e.g., The Screwtape Letters, Mere Christianity, The Hiding Place">
+                                <small>Enter the full title of the book</small>
                             </div>
                             <div class="form-group">
-                                <label for="bookAuthor">Author</label>
-                                <input type="text" id="bookAuthor" name="bookAuthor" placeholder="e.g., C.S. Lewis">
+                                <label for="bookAuthor">Author *</label>
+                                <input type="text" id="bookAuthor" name="bookAuthor" placeholder="e.g., C.S. Lewis, Corrie ten Boom">
+                                <small>Enter the author's name</small>
+                            </div>
+                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group">
+                                    <label for="bookISBN">ISBN (Optional)</label>
+                                    <input type="text" id="bookISBN" name="bookISBN" placeholder="e.g., 0060652926">
+                                    <small>10-digit ISBN if available</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bookISBN13">ISBN-13 (Optional)</label>
+                                    <input type="text" id="bookISBN13" name="bookISBN13" placeholder="e.g., 978-0060652920">
+                                    <small>13-digit ISBN if available</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="bookPassage">Related Scripture Passage (Optional)</label>
+                                <input type="text" id="bookPassage" name="bookPassage" placeholder="e.g., Ephesians 6:10-18, 1 Peter 5:8-9">
+                                <small>Optional: Bible passage(s) that relate to the book's themes</small>
                             </div>
                         </div>
 
                         <!-- Denomination -->
                         <div class="form-group">
-                            <label for="denomination">Denomination</label>
+                            <label for="denomination">Denomination *</label>
                             <select id="denomination" name="denomination" required>
-                                <option value="">Select your denomination</option>
-                                <option value="baptist">Baptist</option>
-                                <option value="methodist">Methodist</option>
-                                <option value="presbyterian">Presbyterian</option>
-                                <option value="lutheran">Lutheran</option>
-                                <option value="catholic">Catholic</option>
-                                <option value="anglican">Anglican/Episcopal</option>
-                                <option value="pentecostal">Pentecostal/Charismatic</option>
-                                <option value="nondenominational">Non-denominational</option>
-                                <option value="reformed">Reformed</option>
-                                <option value="other">Other</option>
+                                <option value="">Choose Your Denomination</option>
+                                <optgroup label="Catholic & Orthodox">
+                                    <option value="Roman Catholic">Roman Catholic</option>
+                                    <option value="Eastern Orthodox">Eastern Orthodox</option>
+                                    <option value="Oriental Orthodox">Oriental Orthodox</option>
+                                </optgroup>
+                                <optgroup label="Protestant - Reformed">
+                                    <option value="Lutheran">Lutheran (ELCA, LCMS)</option>
+                                    <option value="Presbyterian">Presbyterian (PCUSA, PCA)</option>
+                                    <option value="Reformed">Reformed</option>
+                                    <option value="Anglican">Anglican/Episcopal</option>
+                                </optgroup>
+                                <optgroup label="Protestant - Evangelical">
+                                    <option value="Baptist">Baptist (SBC, ABC, Independent)</option>
+                                    <option value="Methodist">Methodist (UMC)</option>
+                                    <option value="Pentecostal">Pentecostal</option>
+                                    <option value="Assemblies of God">Assemblies of God</option>
+                                    <option value="Non-denominational">Non-denominational</option>
+                                </optgroup>
+                                <optgroup label="Other Traditions">
+                                    <option value="Church of Christ">Church of Christ</option>
+                                    <option value="Seventh-day Adventist">Seventh-day Adventist</option>
+                                    <option value="Calvary Chapel">Calvary Chapel</option>
+                                    <option value="Vineyard">Vineyard</option>
+                                    <option value="Other">Other</option>
+                                </optgroup>
                             </select>
                         </div>
 
                         <!-- Bible Version -->
                         <div class="form-group">
-                            <label for="bibleVersion">Preferred Bible Version</label>
+                            <label for="bibleVersion">Bible Translation *</label>
                             <select id="bibleVersion" name="bibleVersion" required>
-                                <option value="">Select version</option>
-                                <option value="NIV">NIV (New International Version)</option>
-                                <option value="ESV">ESV (English Standard Version)</option>
-                                <option value="NKJV">NKJV (New King James Version)</option>
-                                <option value="KJV">KJV (King James Version)</option>
-                                <option value="NLT">NLT (New Living Translation)</option>
-                                <option value="NASB">NASB (New American Standard)</option>
-                                <option value="CSB">CSB (Christian Standard Bible)</option>
-                                <option value="MSG">MSG (The Message)</option>
+                                <option value="">Choose Translation</option>
+                                <optgroup label="⭐ Most Popular">
+                                    <option value="NIV">NIV - New International Version</option>
+                                    <option value="ESV">ESV - English Standard Version</option>
+                                    <option value="NKJV">NKJV - New King James Version</option>
+                                    <option value="NLT">NLT - New Living Translation</option>
+                                </optgroup>
+                                <optgroup label="Word-for-Word">
+                                    <option value="KJV">KJV - King James Version</option>
+                                    <option value="NASB">NASB - New American Standard</option>
+                                    <option value="RSV">RSV - Revised Standard Version</option>
+                                </optgroup>
+                                <optgroup label="Thought-for-Thought">
+                                    <option value="CSB">CSB - Christian Standard Bible</option>
+                                    <option value="GNT">GNT - Good News Translation</option>
+                                    <option value="CEV">CEV - Contemporary English</option>
+                                    <option value="NRSV">NRSV - New Revised Standard</option>
+                                </optgroup>
+                                <optgroup label="Paraphrase">
+                                    <option value="The Message">The Message</option>
+                                    <option value="TLB">TLB - The Living Bible</option>
+                                </optgroup>
+                                <optgroup label="Catholic/Orthodox">
+                                    <option value="NAB">NAB - New American Bible</option>
+                                    <option value="NABRE">NABRE - NAB Revised</option>
+                                    <option value="OSB">OSB - Orthodox Study Bible</option>
+                                </optgroup>
                             </select>
                         </div>
 
-                        <!-- Age Group -->
+                        <!-- Age Group and Duration Row -->
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="ageGroup">Target Audience *</label>
+                                <select id="ageGroup" name="ageGroup" required>
+                                    <option value="">Select Age Group</option>
+                                    <option value="Children (Ages 6-11)">Children (Ages 6-11)</option>
+                                    <option value="Middle School (Ages 12-14)">Middle School (Ages 12-14)</option>
+                                    <option value="High School (Ages 15-18)">High School (Ages 15-18)</option>
+                                    <option value="College/Young Adults (Ages 18-25)">College/Young Adults (Ages 18-25)</option>
+                                    <option value="Adults (Ages 26-60)">Adults (Ages 26-60)</option>
+                                    <option value="Seniors (Ages 60+)">Seniors (Ages 60+)</option>
+                                    <option value="Mixed Ages">Mixed Ages (All Adults)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="duration">Study Duration</label>
+                                <select id="duration" name="duration">
+                                    <option value="2 weeks">2 Weeks</option>
+                                    <option value="4 weeks">4 Weeks</option>
+                                    <option value="6 weeks">6 Weeks</option>
+                                    <option value="8 weeks" selected>8 Weeks</option>
+                                    <option value="12 weeks">12 Weeks (Quarter)</option>
+                                    <option value="16 weeks">16 Weeks (Semester)</option>
+                                    <option value="24 weeks">24 Weeks (6 Months)</option>
+                                    <option value="40 weeks">40 Weeks (School Year)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Study Goals & Context -->
                         <div class="form-group">
-                            <label for="ageGroup">Target Age Group</label>
-                            <select id="ageGroup" name="ageGroup" required>
-                                <option value="">Select age group</option>
-                                <option value="children">Children (Ages 6-12)</option>
-                                <option value="youth">Youth (Ages 13-18)</option>
-                                <option value="college">College/Young Adults (Ages 18-25)</option>
-                                <option value="adult">Adults (Ages 25+)</option>
-                                <option value="seniors">Seniors (Ages 60+)</option>
-                                <option value="mixed">Mixed Ages</option>
-                            </select>
+                            <label for="userThoughts">Study Goals & Context</label>
+                            <textarea
+                                id="userThoughts"
+                                name="userThoughts"
+                                rows="8"
+                                placeholder="Share your vision for this study (optional but recommended):&#10;&#10;• What do you want students to learn and experience?&#10;• What life transformation are you praying for?&#10;• Are there specific applications or themes to emphasize?&#10;• Any unique needs or challenges in your group?&#10;• Sensitive topics that need special care?&#10;• Your teaching philosophy or approach?&#10;&#10;The more context you provide, the better we can tailor the curriculum to serve your ministry!"
+                            ></textarea>
+                            <small>Optional but highly recommended for best results</small>
+                        </div>
+
+                        <!-- Group Size and Teaching Context Row -->
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="groupSize">Group Size</label>
+                                <select id="groupSize" name="groupSize">
+                                    <option value="">Select Size (Optional)</option>
+                                    <option value="Individual Study">Individual Study</option>
+                                    <option value="Small Group (4-8)">Small Group (4-8)</option>
+                                    <option value="Medium Group (8-15)">Medium Group (8-15)</option>
+                                    <option value="Large Group (15-30)">Large Group (15-30)</option>
+                                    <option value="Class/Congregation (30+)">Class/Congregation (30+)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="teachingContext">Ministry Context</label>
+                                <select id="teachingContext" name="teachingContext">
+                                    <option value="">Select Context (Optional)</option>
+                                    <option value="Sunday School">Sunday School</option>
+                                    <option value="Small Group/Home Group">Small Group/Life Group</option>
+                                    <option value="Bible Study">Midweek Bible Study</option>
+                                    <option value="Discipleship Group">Discipleship Group</option>
+                                    <option value="Youth Group">Youth Ministry</option>
+                                    <option value="Personal Study">Personal Study</option>
+                                    <option value="Christian School">Christian School</option>
+                                    <option value="Homeschool">Homeschool</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div id="formError" class="error-message" style="display: none;"></div>
