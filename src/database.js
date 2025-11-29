@@ -3,12 +3,13 @@
  * PostgreSQL connection pool using pg library
  */
 
+require('dotenv').config();
 const { Pool } = require('pg');
 
 // Create connection pool
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? {
+    ssl: process.env.DATABASE_URL ? {
         rejectUnauthorized: false // Required for Render.com and most cloud PostgreSQL
     } : false,
     max: 20, // Maximum number of clients in the pool
