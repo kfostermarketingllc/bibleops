@@ -103,6 +103,21 @@ async function getUserByEmail(email) {
 }
 
 /**
+ * Create free user (no password required)
+ * @param {string} email
+ * @returns {Promise<Object>}
+ */
+async function createFreeUser(email) {
+    const result = await query(
+        `INSERT INTO users (email, password_hash, tier, free_trial_start)
+         VALUES ($1, NULL, 'free', NOW())
+         RETURNING id, email, tier, created_at, free_trial_start`,
+        [email]
+    );
+    return result.rows[0];
+}
+
+/**
  * Get user by ID
  * @param {number} userId
  * @returns {Promise<Object|null>}
@@ -141,6 +156,43 @@ async function updateUserStripeCustomerId(userId, stripeCustomerId) {
         'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
         [stripeCustomerId, userId]
     );
+}
+
+/**
+ * Upgrade user from free to premium
+ * @param {string} email
+ * @param {string} passwordHash
+ * @param {string} tier - 'premium', 'annual', or 'church'
+ * @param {string} stripeCustomerId
+ */
+async function upgradeUserToPremium(email, passwordHash, tier, stripeCustomerId) {
+    await query(
+        `UPDATE users
+         SET password_hash = $1,
+             tier = $2,
+             stripe_customer_id = $3,
+             updated_at = NOW()
+         WHERE email = $4`,
+        [passwordHash, tier, stripeCustomerId, email]
+    );
+}
+
+/**
+ * Get free tier usage count (last 45 days)
+ * @param {number} userId
+ * @returns {Promise<number>}
+ */
+async function getFreeUsageCount(userId) {
+    const result = await query(
+        `SELECT COUNT(*) as count
+         FROM curriculum_generations
+         WHERE user_id = $1
+         AND tier_at_generation = 'free'
+         AND created_at >= NOW() - INTERVAL '45 days'
+         AND status = 'completed'`,
+        [userId]
+    );
+    return parseInt(result.rows[0].count);
 }
 
 /**
@@ -340,7 +392,10 @@ module.exports = {
     getUserByEmail,
     getUserById,
     createUser,
+    createFreeUser,
     updateUserStripeCustomerId,
+    upgradeUserToPremium,
+    getFreeUsageCount,
     getActiveSubscription,
     getUsageCount,
     getOverageCount,

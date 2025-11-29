@@ -16,7 +16,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255), -- NULL for free users who haven't upgraded
+    tier VARCHAR(20) DEFAULT 'free', -- 'free', 'premium', 'annual', 'church'
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     stripe_customer_id VARCHAR(255) UNIQUE,
@@ -24,12 +25,14 @@ CREATE TABLE users (
     verification_token VARCHAR(255),
     reset_token VARCHAR(255),
     reset_token_expires TIMESTAMP,
-    last_login TIMESTAMP
+    last_login TIMESTAMP,
+    free_trial_start TIMESTAMP DEFAULT NOW() -- Track 45-day free window
 );
 
 -- Index for faster email lookups
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_stripe_customer ON users(stripe_customer_id);
+CREATE INDEX idx_users_tier ON users(tier);
 
 -- ============================================
 -- SUBSCRIPTIONS TABLE
@@ -81,9 +84,12 @@ CREATE TABLE curriculum_generations (
     bible_version VARCHAR(50),
     age_group VARCHAR(50),
 
-    -- Billing period tracking
-    billing_period_start TIMESTAMP NOT NULL,
-    billing_period_end TIMESTAMP NOT NULL,
+    -- Tier tracking
+    tier_at_generation VARCHAR(20) DEFAULT 'free', -- Track if free or premium generation
+
+    -- Billing period tracking (NULL for free users)
+    billing_period_start TIMESTAMP,
+    billing_period_end TIMESTAMP,
     is_overage BOOLEAN DEFAULT FALSE,
     overage_charge_amount DECIMAL(10, 2), -- $4.99 if overage
     stripe_payment_intent_id VARCHAR(255), -- For overage charges
@@ -108,6 +114,7 @@ CREATE INDEX idx_curriculum_job_id ON curriculum_generations(job_id);
 CREATE INDEX idx_curriculum_billing_period ON curriculum_generations(user_id, billing_period_start);
 CREATE INDEX idx_curriculum_status ON curriculum_generations(status);
 CREATE INDEX idx_curriculum_created_at ON curriculum_generations(created_at DESC);
+CREATE INDEX idx_curriculum_tier ON curriculum_generations(tier_at_generation);
 
 -- ============================================
 -- PDF FILES TABLE
@@ -224,6 +231,23 @@ SELECT
 FROM curriculum_generations
 WHERE status = 'completed'
 GROUP BY user_id, billing_period_start, billing_period_end;
+
+-- View: Free tier usage (last 45 days)
+CREATE VIEW free_tier_usage AS
+SELECT
+    u.id as user_id,
+    u.email,
+    u.tier,
+    u.free_trial_start,
+    COUNT(cg.id) as generations_used,
+    (3 - COUNT(cg.id)) as generations_remaining
+FROM users u
+LEFT JOIN curriculum_generations cg ON u.id = cg.user_id
+    AND cg.tier_at_generation = 'free'
+    AND cg.status = 'completed'
+    AND cg.created_at >= NOW() - INTERVAL '45 days'
+WHERE u.tier = 'free'
+GROUP BY u.id, u.email, u.tier, u.free_trial_start;
 
 -- ============================================
 -- SAMPLE QUERIES (For Testing)
