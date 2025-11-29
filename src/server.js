@@ -9,6 +9,11 @@ const { generateBibleStudy } = require('./bible-study-generator');
 const { sendCurriculumEmailWithLinks, testConnection } = require('./email-service-s3');
 const { testS3Connection } = require('./s3-service');
 
+// Premium features
+const db = require('./database');
+const premiumRoutes = require('./premium-routes');
+const stripeService = require('./stripe-service');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -20,7 +25,12 @@ app.use(cors({
     credentials: true
 }));
 app.use(bodyParser.json());
+
+// Serve public files (free tier)
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Serve premium files
+app.use('/premium', express.static(path.join(__dirname, '../premium-public')));
 
 // Store generation status
 const generationStatus = new Map();
@@ -32,6 +42,33 @@ const activeJobs = new Set();
 let isShuttingDown = false;
 
 // API Routes
+
+// Mount premium routes
+app.use('/api/premium', premiumRoutes);
+
+// Stripe webhook (must be before bodyParser middleware for raw body)
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+        console.warn('⚠️ STRIPE_WEBHOOK_SECRET not configured, skipping webhook verification');
+        return res.status(400).send('Webhook secret not configured');
+    }
+
+    try {
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+
+        // Handle the event
+        await stripeService.handleWebhook(event);
+
+        res.json({ received: true });
+    } catch (err) {
+        console.error('❌ Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+});
 
 /**
  * POST /api/generate
@@ -59,6 +96,44 @@ app.post('/api/generate', async (req, res) => {
             return res.status(400).json({
                 error: 'Email address is required'
             });
+        }
+
+        // FREE TIER TRACKING: Check usage limits
+        try {
+            // Get or create free user
+            let user = await db.getUserByEmail(formData.email);
+
+            if (!user) {
+                // Create new free user
+                user = await db.createFreeUser(formData.email);
+                console.log(`🆕 Created new free user: ${formData.email}`);
+            }
+
+            // Check free tier limits (only for free users)
+            if (user.tier === 'free') {
+                const freeUsageCount = await db.getFreeUsageCount(user.id);
+                console.log(`📊 Free tier usage for ${formData.email}: ${freeUsageCount}/3`);
+
+                if (freeUsageCount >= 3) {
+                    return res.status(403).json({
+                        error: 'Free tier limit reached',
+                        message: 'You\'ve used your 3 free Bible study curricula. Upgrade to Premium for 25 per month at just $19.97!',
+                        usageCount: freeUsageCount,
+                        limit: 3,
+                        upgradeUrl: '/premium/signup.html?email=' + encodeURIComponent(formData.email),
+                        tier: 'free'
+                    });
+                }
+            }
+
+            // Store user ID for later tracking
+            formData.userId = user.id;
+            formData.userTier = user.tier;
+
+        } catch (dbError) {
+            console.error('⚠️ Database error (non-blocking):', dbError);
+            // Continue with generation even if database tracking fails
+            // This ensures existing users aren't blocked if database is down
         }
 
         // Validate study focus requirements
@@ -198,6 +273,34 @@ async function processGenerationInBackground(jobId, formData) {
 
             console.log(`✅ [${jobId}] Email sent successfully to ${formData.email}!`);
 
+            // Track generation in database (free tier)
+            if (formData.userId) {
+                try {
+                    await db.createGeneration({
+                        userId: formData.userId,
+                        jobId: jobId,
+                        studyFocus: formData.studyFocus,
+                        passage: formData.passage || null,
+                        theme: formData.theme || null,
+                        bookTitle: formData.bookTitle || null,
+                        bookAuthor: formData.bookAuthor || null,
+                        denomination: formData.denomination,
+                        bibleVersion: formData.bibleVersion,
+                        ageGroup: formData.ageGroup,
+                        tierAtGeneration: formData.userTier || 'free',
+                        billingPeriodStart: null, // Free tier doesn't have billing periods
+                        billingPeriodEnd: null,
+                        isOverage: false,
+                        overageChargeAmount: null,
+                        status: 'completed'
+                    });
+                    console.log(`📊 [${jobId}] Generation tracked in database`);
+                } catch (dbError) {
+                    console.error(`⚠️ [${jobId}] Failed to track generation in database:`, dbError);
+                    // Don't fail the generation if database tracking fails
+                }
+            }
+
             // Update final status
             generationStatus.set(jobId, {
                 status: 'completed',
@@ -274,11 +377,15 @@ app.get('/api/health', (req, res) => {
         anthropicConfigured: !!process.env.ANTHROPIC_API_KEY,
         emailConfigured: !!process.env.MAILCHIMP_API_KEY,
         s3Configured: !!process.env.AWS_ACCESS_KEY_ID && !!process.env.AWS_SECRET_ACCESS_KEY,
+        databaseConfigured: !!process.env.DATABASE_URL,
+        stripeConfigured: !!process.env.STRIPE_SECRET_KEY,
         emailService: 'mailchimp-with-s3-links',
         agents: 14,
         components: 'Book Research (optional), 11 Bible Study Agents, Student Guide, Leader Guide',
         activeJobs: activeJobs.size,
-        isShuttingDown: isShuttingDown
+        isShuttingDown: isShuttingDown,
+        premiumEnabled: !!process.env.DATABASE_URL && !!process.env.STRIPE_SECRET_KEY,
+        freeTierLimit: '3 curricula per 45 days'
     });
 });
 
@@ -318,6 +425,8 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, async () => {
+    const premiumEnabled = !!(process.env.DATABASE_URL && process.env.STRIPE_SECRET_KEY);
+
     console.log(`
 📖 Bible Study Curriculum Generator Started!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -328,9 +437,11 @@ app.listen(PORT, async () => {
 🔑 Anthropic API:     ${process.env.ANTHROPIC_API_KEY ? '✅ Configured' : '❌ Not configured'}
 📧 Email Service:     ${process.env.MAILCHIMP_API_KEY ? '✅ Configured (Mailchimp)' : '❌ Not configured'}
 ☁️  AWS S3:           ${process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY ? '✅ Configured' : '❌ Not configured'}
+🗄️  PostgreSQL:       ${process.env.DATABASE_URL ? '✅ Configured' : '❌ Not configured'}
+💳 Stripe:            ${process.env.STRIPE_SECRET_KEY ? '✅ Configured' : '❌ Not configured'}
 🤖 AI Agents:         14 specialized agents (Book Research + 11 Bible Study + 2 Guides)
 
-✝️  Ready to generate transformative Bible studies!
+${premiumEnabled ? '💎 PREMIUM SYSTEM:    ✅ Enabled\n   Free Tier:         3 curricula per 45 days\n   Premium:           $19.97/month for 25 curricula\n   Premium Portal:    http://localhost:' + PORT + '/premium\n' : ''}✝️  Ready to generate transformative Bible studies!
 Press Ctrl+C to stop
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `);
@@ -338,6 +449,15 @@ Press Ctrl+C to stop
     // Test S3 connection on startup
     if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
         await testS3Connection();
+    }
+
+    // Test database connection on startup
+    if (process.env.DATABASE_URL) {
+        try {
+            await db.testConnection();
+        } catch (error) {
+            console.error('⚠️ Database connection failed:', error.message);
+        }
     }
 });
 
