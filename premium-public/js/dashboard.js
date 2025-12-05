@@ -113,10 +113,16 @@ function setupEventListeners() {
         radio.addEventListener('change', (e) => {
             const focus = e.target.value;
 
-            // Show/hide relevant fields
-            document.getElementById('passageGroup').style.display = focus === 'passage' ? 'block' : 'none';
-            document.getElementById('themeGroup').style.display = focus === 'theme' ? 'block' : 'none';
-            document.getElementById('bookGroup').style.display = focus === 'book' ? 'block' : 'none';
+            // Show/hide relevant fields (matching free version IDs)
+            document.getElementById('passageInput').style.display = focus === 'passage' ? 'block' : 'none';
+            document.getElementById('themeInput').style.display = focus === 'theme' ? 'block' : 'none';
+            document.getElementById('bookInput').style.display = focus === 'book' ? 'block' : 'none';
+
+            // Show/hide Book Research checkbox based on study type
+            const bookResearchCheckbox = document.getElementById('bookResearchCheckboxLabel');
+            if (bookResearchCheckbox) {
+                bookResearchCheckbox.style.display = focus === 'book' ? 'flex' : 'none';
+            }
 
             // Clear hidden fields
             if (focus !== 'passage') document.getElementById('passage').value = '';
@@ -127,6 +133,9 @@ function setupEventListeners() {
                 document.getElementById('bookISBN').value = '';
                 document.getElementById('bookISBN13').value = '';
                 document.getElementById('bookPassage').value = '';
+                // Uncheck book research if not a book study
+                const bookResearchInput = document.querySelector('input[value="bookResearch"]');
+                if (bookResearchInput) bookResearchInput.checked = false;
             }
         });
     });
@@ -182,6 +191,12 @@ async function handleGenerate(e) {
     const studyFocusRadio = document.querySelector('input[name="studyFocus"]:checked');
     const studyFocus = studyFocusRadio ? studyFocusRadio.value : 'passage';
 
+    // Collect selected optional outputs
+    const selectedOutputs = [];
+    document.querySelectorAll('input[name="selectedOutputs"]:checked').forEach(checkbox => {
+        selectedOutputs.push(checkbox.value);
+    });
+
     // Get form data - matching free tool exactly
     const formData = {
         studyFocus: studyFocus,
@@ -198,7 +213,8 @@ async function handleGenerate(e) {
         duration: document.getElementById('duration').value,
         userThoughts: document.getElementById('userThoughts').value,
         groupSize: document.getElementById('groupSize').value,
-        teachingContext: document.getElementById('teachingContext').value
+        teachingContext: document.getElementById('teachingContext').value,
+        selectedOutputs: selectedOutputs
     };
 
     // Validate based on study focus
