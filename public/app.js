@@ -9,22 +9,29 @@ const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:3001/api'
     : 'https://bibleops.onrender.com/api';
 
-// Component names for progress tracking
-const COMPONENTS = [
-    { name: 'Book Research & Analysis', icon: '📖', bookOnly: true },
-    { name: 'Foundational Materials & Reference', icon: '📚' },
-    { name: 'Bible Translation', icon: '📖' },
-    { name: 'Denominational Theology', icon: '✝️' },
-    { name: 'Biblical Context', icon: '🏛️' },
-    { name: 'Hermeneutics & Interpretation', icon: '🔍' },
-    { name: 'Original Languages', icon: '🔤' },
-    { name: 'Cross-Reference & Theology', icon: '🔗' },
-    { name: 'Application & Discipleship', icon: '🎯' },
+// Optional component definitions (for checkbox selection)
+const OPTIONAL_COMPONENTS = {
+    bookResearch: { name: 'Book Research & Analysis', icon: '📖', bookOnly: true },
+    foundation: { name: 'Foundational Framework', icon: '📚' },
+    theology: { name: 'Denominational Theology', icon: '✝️' },
+    biblicalContext: { name: 'Biblical Context', icon: '🏛️' },
+    hermeneutics: { name: 'Hermeneutics & Interpretation', icon: '🔍' },
+    originalLanguages: { name: 'Original Languages', icon: '🔤' },
+    crossReference: { name: 'Cross-Reference & Theology', icon: '🔗' },
+    application: { name: 'Application & Discipleship', icon: '🎯' },
+    prayer: { name: 'Prayer & Devotional', icon: '🙏' }
+};
+
+// Always-included components (based on group size)
+const GROUP_STUDY_COMPONENTS = [
     { name: 'Small Group Discussion', icon: '💬' },
-    { name: 'Prayer & Devotional', icon: '🙏' },
     { name: 'Teaching Methods', icon: '👨‍🏫' },
     { name: 'Student Study Guide', icon: '📝' },
     { name: "Leader's Guide", icon: '👥' }
+];
+
+const INDIVIDUAL_STUDY_COMPONENTS = [
+    { name: 'Individual Study Guide', icon: '📖' }
 ];
 
 // Initialize on page load
@@ -50,6 +57,7 @@ function setupFormHandlers() {
             const themeField = document.getElementById('theme');
             const bookTitleField = document.getElementById('bookTitle');
             const bookAuthorField = document.getElementById('bookAuthor');
+            const bookResearchCheckbox = document.getElementById('bookResearchCheckboxLabel');
 
             if (e.target.value === 'passage') {
                 passageInput.style.display = 'block';
@@ -59,6 +67,9 @@ function setupFormHandlers() {
                 themeField.required = false;
                 bookTitleField.required = false;
                 bookAuthorField.required = false;
+                // Hide book research checkbox
+                bookResearchCheckbox.style.display = 'none';
+                bookResearchCheckbox.querySelector('input').checked = false;
             } else if (e.target.value === 'theme') {
                 passageInput.style.display = 'none';
                 themeInput.style.display = 'block';
@@ -67,6 +78,9 @@ function setupFormHandlers() {
                 themeField.required = true;
                 bookTitleField.required = false;
                 bookAuthorField.required = false;
+                // Hide book research checkbox
+                bookResearchCheckbox.style.display = 'none';
+                bookResearchCheckbox.querySelector('input').checked = false;
             } else if (e.target.value === 'book') {
                 passageInput.style.display = 'none';
                 themeInput.style.display = 'none';
@@ -75,6 +89,8 @@ function setupFormHandlers() {
                 themeField.required = false;
                 bookTitleField.required = true;
                 bookAuthorField.required = true;
+                // Show book research checkbox for book studies
+                bookResearchCheckbox.style.display = 'flex';
             }
         });
     });
@@ -145,6 +161,13 @@ function collectFormData() {
         formData.bookISBN13 = document.getElementById('bookISBN13').value || '';
         formData.passage = document.getElementById('bookPassage').value || '';
     }
+
+    // Collect selected optional outputs
+    const selectedOutputs = [];
+    document.querySelectorAll('input[name="selectedOutputs"]:checked').forEach(checkbox => {
+        selectedOutputs.push(checkbox.value);
+    });
+    formData.selectedOutputs = selectedOutputs;
 
     return formData;
 }
@@ -355,20 +378,23 @@ function displayResults(result) {
     const resultsSection = document.getElementById('resultsSection');
     resultsSection.style.display = 'block';
 
-    // Create download links
+    // Create download links - all optional outputs plus study guides
     const downloadLinks = document.getElementById('downloadLinks');
     const downloads = [
+        { key: 'bookResearch', title: 'Book Research & Analysis', icon: '📖' },
         { key: 'foundation', title: 'Foundational Framework', icon: '📚' },
-        { key: 'bibleVersion', title: 'Bible Translation Recommendation', icon: '📖' },
         { key: 'theology', title: 'Denominational Theological Framework', icon: '✝️' },
         { key: 'biblicalContext', title: 'Biblical Context Document', icon: '🏛️' },
         { key: 'hermeneutics', title: 'Hermeneutical Guide', icon: '🔍' },
-        { key: 'languages', title: 'Original Languages Guide', icon: '🔤' },
+        { key: 'originalLanguages', title: 'Original Languages Guide', icon: '🔤' },
         { key: 'crossReference', title: 'Cross-Reference & Theology Guide', icon: '🔗' },
         { key: 'application', title: 'Application & Discipleship Guide', icon: '🎯' },
-        { key: 'discussion', title: 'Small Group Discussion Guide', icon: '💬' },
-        { key: 'devotional', title: 'Prayer & Devotional Guide', icon: '🙏' },
-        { key: 'teaching', title: 'Teaching Methods Guide', icon: '👨‍🏫' }
+        { key: 'prayer', title: 'Prayer & Devotional Guide', icon: '🙏' },
+        { key: 'smallGroup', title: 'Small Group Discussion Guide', icon: '💬' },
+        { key: 'teachingMethods', title: 'Teaching Methods Guide', icon: '👨‍🏫' },
+        { key: 'studentGuide', title: 'Student Study Guide', icon: '📝' },
+        { key: 'leaderGuide', title: "Leader's Guide", icon: '👥' },
+        { key: 'individualGuide', title: 'Individual Study Guide', icon: '📖' }
     ];
 
     downloadLinks.innerHTML = downloads.map(download => {
