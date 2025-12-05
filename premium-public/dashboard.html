@@ -62,7 +62,47 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Upgrade Banner (shown for free users or when limit reached) -->
+                <div id="upgradeBanner" class="upgrade-banner" style="display: none;">
+                    <div class="upgrade-content">
+                        <div class="upgrade-icon">⚡</div>
+                        <div class="upgrade-text">
+                            <h3 id="upgradeBannerTitle">Upgrade to Premium</h3>
+                            <p id="upgradeBannerMessage">Get more curriculum generations and unlock all features.</p>
+                        </div>
+                        <button id="upgradeBannerBtn" class="btn-primary">Upgrade Now</button>
+                    </div>
+                </div>
             </section>
+
+            <!-- Overage Confirmation Modal -->
+            <div id="overageModal" class="modal" style="display: none;">
+                <div class="modal-backdrop"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Additional Generation</h3>
+                        <button class="modal-close" id="closeOverageModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="overage-info">
+                            <div class="overage-icon">📚</div>
+                            <p>You've used all <strong>4 included</strong> curriculum generations this month.</p>
+                            <p>Additional generations are available for <strong>$4.99 each</strong>.</p>
+                        </div>
+                        <div class="overage-details">
+                            <div class="overage-line">
+                                <span>Additional Curriculum</span>
+                                <span>$4.99</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" id="cancelOverageBtn">Cancel</button>
+                        <button class="btn-primary" id="confirmOverageBtn">Confirm & Generate</button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Generate New Curriculum -->
             <section class="generate-section">
