@@ -137,7 +137,7 @@ async function loadGenerationHistory() {
             return;
         }
 
-        // Build history HTML
+        // Build history HTML with download buttons
         historyList.innerHTML = data.history.map(item => `
             <div class="history-item">
                 <div class="history-info">
@@ -146,7 +146,9 @@ async function loadGenerationHistory() {
                     ${item.isOverage ? '<span style="color: var(--premium-gold);">• Overage ($4.99)</span>' : ''}
                 </div>
                 <div class="history-actions">
-                    <a href="${item.downloadUrl}" class="btn-secondary" target="_blank">Download</a>
+                    <button class="btn-secondary" onclick="downloadCurriculum('${item.downloadUrl}', '${(item.title || 'Curriculum').replace(/'/g, "\\'")}')">
+                        Download ZIP
+                    </button>
                 </div>
             </div>
         `).join('');
@@ -154,6 +156,60 @@ async function loadGenerationHistory() {
     } catch (error) {
         console.error('Failed to load history:', error);
         document.getElementById('historyList').innerHTML = '<p class="loading">Failed to load history.</p>';
+    }
+}
+
+// Download curriculum as ZIP file
+async function downloadCurriculum(downloadUrl, title) {
+    try {
+        // Show loading state
+        event.target.disabled = true;
+        event.target.textContent = 'Downloading...';
+
+        // Make authenticated request to download endpoint
+        const response = await BibleOpsApp.apiRequest(downloadUrl);
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || errorData.error || 'Download failed');
+        }
+
+        // Get the blob from response
+        const blob = await response.blob();
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+
+        // Get filename from Content-Disposition header or generate one
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `BibleOps_${title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_')}.zip`;
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="(.+)"/);
+            if (match) filename = match[1];
+        }
+
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        // Reset button
+        event.target.disabled = false;
+        event.target.textContent = 'Download ZIP';
+
+    } catch (error) {
+        console.error('Download error:', error);
+        alert(error.message || 'Failed to download curriculum. Please try again.');
+
+        // Reset button
+        event.target.disabled = false;
+        event.target.textContent = 'Download ZIP';
     }
 }
 
