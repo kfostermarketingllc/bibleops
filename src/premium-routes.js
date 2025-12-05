@@ -135,10 +135,27 @@ router.post('/login', async (req, res) => {
 /**
  * POST /api/premium/create-checkout-session
  * Create Stripe checkout session for subscription
+ * Supports both authenticated and unauthenticated users
  */
 router.post('/create-checkout-session', async (req, res) => {
     try {
-        const { email, planType } = req.body;
+        const { planType } = req.body;
+
+        // Get email from auth token if available, otherwise from body
+        let email = req.body.email;
+
+        // Try to get email from JWT token if present
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            try {
+                const token = authHeader.split(' ')[1];
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                email = decoded.email;
+            } catch (e) {
+                // Token invalid, continue with body email
+            }
+        }
 
         if (!email || !planType) {
             return res.status(400).json({ error: 'Email and plan type required' });
@@ -281,6 +298,9 @@ router.get('/history', verifyToken, async (req, res) => {
 // GENERATION ROUTE (Premium)
 // ============================================
 
+// Import the Bible study generator
+const { generateBibleStudy } = require('./bible-study-generator');
+
 /**
  * POST /api/premium/generate
  * Generate curriculum for premium users
@@ -294,9 +314,18 @@ router.post('/generate', verifyToken, requirePremium, async (req, res) => {
             theme,
             bookTitle,
             bookAuthor,
+            bookISBN,
+            bookISBN13,
+            bookPassage,
             denomination,
             bibleVersion,
-            ageGroup
+            ageGroup,
+            duration,
+            userThoughts,
+            groupSize,
+            teachingContext,
+            selectedOutputs,
+            confirmOverage
         } = req.body;
 
         // Get tier limits
@@ -323,6 +352,15 @@ router.post('/generate', verifyToken, requirePremium, async (req, res) => {
                 return res.status(403).json({
                     error: 'Monthly limit reached',
                     message: `You've used all ${limits.monthlyLimit} generations this month`
+                });
+            }
+
+            // User must confirm overage charge
+            if (!confirmOverage) {
+                return res.status(402).json({
+                    error: 'Overage confirmation required',
+                    message: 'Additional generation requires $4.99 overage charge',
+                    requiresOverageConfirmation: true
                 });
             }
 
@@ -366,9 +404,31 @@ router.post('/generate', verifyToken, requirePremium, async (req, res) => {
             status: 'pending'
         });
 
-        // TODO: Actually trigger curriculum generation (call existing generation logic)
-        // For now, just return success
+        // Build form data for the generator (matching free version format)
+        const formData = {
+            email: user.email,
+            studyFocus: studyFocus,
+            passage: passage,
+            theme: theme,
+            bookTitle: bookTitle,
+            bookAuthor: bookAuthor,
+            bookISBN: bookISBN,
+            bookISBN13: bookISBN13,
+            bookPassage: bookPassage,
+            denomination: denomination,
+            bibleVersion: bibleVersion,
+            ageGroup: ageGroup,
+            duration: duration || '8 weeks',
+            userThoughts: userThoughts || '',
+            groupSize: groupSize || 'Small group (8-12 people)',
+            teachingContext: teachingContext || 'Small group Bible study',
+            selectedOutputs: selectedOutputs || [],
+            jobId: jobId,
+            isPremium: true,
+            isOverage: isOverage
+        };
 
+        // Immediately respond to the client
         res.json({
             success: true,
             message: 'Curriculum generation started',
@@ -376,6 +436,25 @@ router.post('/generate', verifyToken, requirePremium, async (req, res) => {
             isOverage: isOverage,
             overageCharge: isOverage ? limits.overagePrice : null
         });
+
+        // Trigger async generation (don't await - let it run in background)
+        generateBibleStudy(formData)
+            .then(async (results) => {
+                console.log(`✅ Premium generation complete for job ${jobId}`);
+                // Update generation record with completion status
+                await db.query(
+                    'UPDATE generations SET status = $1, completed_at = NOW() WHERE job_id = $2',
+                    ['completed', jobId]
+                );
+            })
+            .catch(async (error) => {
+                console.error(`❌ Premium generation failed for job ${jobId}:`, error);
+                // Update generation record with failed status
+                await db.query(
+                    'UPDATE generations SET status = $1, error_message = $2 WHERE job_id = $3',
+                    ['failed', error.message, jobId]
+                );
+            });
 
     } catch (error) {
         console.error('Premium generation error:', error);
