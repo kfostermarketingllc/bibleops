@@ -5,11 +5,23 @@
 
 const express = require('express');
 const bcrypt = require('bcrypt');
+const archiver = require('archiver');
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const db = require('./database');
 const { generateToken, verifyToken, requirePremium } = require('./auth-middleware');
 const stripeService = require('./stripe-service');
 
 const router = express.Router();
+
+// Initialize S3 client for downloads
+const s3Client = new S3Client({
+    region: process.env.AWS_REGION || 'us-east-1',
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
+});
+const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || 'bibleops-pdfs';
 
 // ============================================
 // AUTHENTICATION ROUTES
@@ -291,6 +303,102 @@ router.get('/history', verifyToken, async (req, res) => {
     } catch (error) {
         console.error('History error:', error);
         res.status(500).json({ error: 'Failed to load generation history' });
+    }
+});
+
+/**
+ * GET /api/premium/download/:jobId
+ * Download all PDFs for a generation as a ZIP file
+ */
+router.get('/download/:jobId', verifyToken, async (req, res) => {
+    try {
+        const { jobId } = req.params;
+        const userId = req.user.id;
+
+        // Get generation record
+        const generation = await db.getGenerationByJobId(userId, jobId);
+
+        if (!generation) {
+            return res.status(404).json({ error: 'Generation not found' });
+        }
+
+        // Check if S3 keys are stored
+        if (!generation.s3_keys) {
+            return res.status(404).json({
+                error: 'Download not available',
+                message: 'PDF files are no longer available. Files are stored for 7 days after generation.'
+            });
+        }
+
+        // Parse S3 keys
+        let s3Keys;
+        try {
+            s3Keys = typeof generation.s3_keys === 'string'
+                ? JSON.parse(generation.s3_keys)
+                : generation.s3_keys;
+        } catch (parseError) {
+            console.error('Failed to parse S3 keys:', parseError);
+            return res.status(500).json({ error: 'Failed to process download' });
+        }
+
+        if (!s3Keys || s3Keys.length === 0) {
+            return res.status(404).json({ error: 'No files available for download' });
+        }
+
+        // Create ZIP filename based on study content
+        const studyName = generation.passage || generation.theme || generation.book_title || 'BibleStudy';
+        const sanitizedName = studyName.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_').substring(0, 50);
+        const zipFilename = `BibleOps_${sanitizedName}_${jobId.split('_')[1]}.zip`;
+
+        // Set response headers for ZIP download
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
+
+        // Create archive
+        const archive = archiver('zip', { zlib: { level: 5 } });
+
+        // Handle archive errors
+        archive.on('error', (err) => {
+            console.error('Archive error:', err);
+            if (!res.headersSent) {
+                res.status(500).json({ error: 'Failed to create download' });
+            }
+        });
+
+        // Pipe archive to response
+        archive.pipe(res);
+
+        // Fetch each PDF from S3 and add to archive
+        for (const file of s3Keys) {
+            try {
+                const command = new GetObjectCommand({
+                    Bucket: BUCKET_NAME,
+                    Key: file.s3Key
+                });
+
+                const s3Response = await s3Client.send(command);
+
+                // Add file to archive with a clean filename
+                const cleanFilename = file.filename || `${file.title}.pdf`;
+                archive.append(s3Response.Body, { name: cleanFilename });
+
+                console.log(`📄 Added to ZIP: ${cleanFilename}`);
+            } catch (s3Error) {
+                console.error(`Failed to fetch ${file.s3Key}:`, s3Error.message);
+                // Continue with other files even if one fails
+            }
+        }
+
+        // Finalize the archive
+        await archive.finalize();
+
+        console.log(`✅ ZIP download complete: ${zipFilename}`);
+
+    } catch (error) {
+        console.error('Download error:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Failed to create download' });
+        }
     }
 });
 

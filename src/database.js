@@ -384,6 +384,35 @@ async function markWebhookProcessed(eventId) {
     );
 }
 
+/**
+ * Update generation with S3 keys after PDF upload
+ * @param {string} jobId - The job ID
+ * @param {Array} s3Keys - Array of {title, filename, s3Key}
+ */
+async function updateGenerationS3Keys(jobId, s3Keys) {
+    await query(
+        `UPDATE curriculum_generations
+         SET s3_keys = $1
+         WHERE job_id = $2`,
+        [JSON.stringify(s3Keys), jobId]
+    );
+}
+
+/**
+ * Get generation by job ID (for downloads)
+ * @param {number} userId - User ID (for authorization)
+ * @param {string} jobId - Job ID
+ * @returns {Promise<Object|null>}
+ */
+async function getGenerationByJobId(userId, jobId) {
+    const result = await query(
+        `SELECT * FROM curriculum_generations
+         WHERE user_id = $1 AND job_id = $2`,
+        [userId, jobId]
+    );
+    return result.rows[0] || null;
+}
+
 // Export pool and helper functions
 module.exports = {
     pool,
@@ -402,7 +431,9 @@ module.exports = {
     getOverageCount,
     createGeneration,
     updateGenerationStatus,
+    updateGenerationS3Keys,
     getGenerationHistory,
+    getGenerationByJobId,
     upsertSubscription,
     logWebhookEvent,
     markWebhookProcessed

@@ -273,6 +273,16 @@ async function processGenerationInBackground(jobId, formData) {
 
             console.log(`✅ [${jobId}] Email sent successfully to ${formData.email}!`);
 
+            // Store S3 keys in database for future downloads
+            if (emailResult.s3Keys && emailResult.s3Keys.length > 0) {
+                try {
+                    await db.updateGenerationS3Keys(jobId, emailResult.s3Keys);
+                    console.log(`📦 [${jobId}] S3 keys stored in database (${emailResult.s3Keys.length} files)`);
+                } catch (s3KeyError) {
+                    console.error(`⚠️ [${jobId}] Failed to store S3 keys:`, s3KeyError);
+                }
+            }
+
             // Track generation in database (free tier)
             if (formData.userId) {
                 try {

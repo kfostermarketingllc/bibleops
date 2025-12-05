@@ -9,14 +9,15 @@ const { uploadAndGetDownloadUrl } = require('./s3-service');
 /**
  * Upload PDFs to S3 and get download URLs
  * @param {Array} pdfs - Array of PDF file objects {name, title, path, buffer}
- * @returns {Promise<Array>} - Array of PDFs with download URLs
+ * @returns {Promise<Array>} - Array of PDFs with download URLs and S3 keys
  */
 async function uploadPDFsToS3(pdfs) {
     const uploadPromises = pdfs.map(async (pdf) => {
         try {
-            const { downloadUrl, expiresAt } = await uploadAndGetDownloadUrl(pdf.path, pdf.name);
+            const { s3Key, downloadUrl, expiresAt } = await uploadAndGetDownloadUrl(pdf.path, pdf.name);
             return {
                 ...pdf,
+                s3Key,
                 downloadUrl,
                 expiresAt
             };
@@ -317,12 +318,20 @@ bibleops.com
 
         console.log(`✅ Email sent successfully to ${toEmail} with ${pdfsWithLinks.length} download links`);
 
+        // Extract S3 keys for storage in database
+        const s3Keys = pdfsWithLinks.map(pdf => ({
+            title: pdf.title,
+            filename: pdf.name,
+            s3Key: pdf.s3Key
+        }));
+
         return {
             success: true,
             messageId: response[0]._id,
             status: response[0].status,
             downloadCount: pdfsWithLinks.length,
-            expiresAt: expirationDate
+            expiresAt: expirationDate,
+            s3Keys: s3Keys
         };
 
     } catch (error) {
