@@ -114,6 +114,9 @@ function cleanMarkdownContent(content) {
     // Remove any standalone hash symbols that aren't headers
     cleaned = cleaned.replace(/^#+\s*$/gm, '');
 
+    // Remove trailing blank lines at end of content
+    cleaned = cleaned.replace(/\n+$/, '');
+
     return cleaned;
 }
 
@@ -312,9 +315,11 @@ function addContent(doc, content) {
                 }
             }
         } else if (line.trim() === '') {
-            // Empty line
+            // Empty line - only add spacing if we're not near the bottom of a page
             inList = false;
-            doc.moveDown(0.4);
+            if (doc.y < 650) {
+                doc.moveDown(0.4);
+            }
         } else {
             // Regular paragraph - check if it's a standalone bold line
             inList = false;
@@ -340,25 +345,25 @@ function addContent(doc, content) {
 }
 
 /**
- * Check if a line is a question (ends with ?)
+ * Check if a line is a question (contains a question mark)
  */
 function isQuestion(text) {
     if (!text) return false;
     const cleaned = text.trim();
-    return cleaned.endsWith('?');
+    // Check if the text contains a question mark (more flexible than just ending with one)
+    // Also handle cases where there might be trailing punctuation or formatting
+    return cleaned.includes('?');
 }
 
 /**
  * Add answer lines below a question for writing responses
  */
 function addAnswerLines(doc, marginLeft, contentWidth, lineCount = ANSWER_LINES_COUNT) {
-    const startY = doc.y + 8; // Small gap after question
+    let currentY = doc.y + 8; // Small gap after question
 
     for (let i = 0; i < lineCount; i++) {
-        const lineY = startY + (i * ANSWER_LINE_HEIGHT);
-
-        // Check if we need a new page
-        if (lineY > 680) {
+        // Check if we need a new page before drawing this line
+        if (currentY > 680) {
             doc.addPage();
             // Add simple header on continuation pages
             doc.fontSize(10)
@@ -370,25 +375,22 @@ function addAnswerLines(doc, marginLeft, contentWidth, lineCount = ANSWER_LINES_
                 .strokeColor(BRAND_COLORS.border)
                 .lineWidth(0.5)
                 .stroke();
-            doc.y = 85;
+            currentY = 85;
             doc.fillColor(BRAND_COLORS.text);
-
-            // Recalculate remaining lines on new page
-            const remainingLines = lineCount - i;
-            addAnswerLines(doc, marginLeft, contentWidth, remainingLines);
-            return;
         }
 
         // Draw the answer line
-        doc.moveTo(marginLeft, lineY)
-            .lineTo(marginLeft + contentWidth, lineY)
+        doc.moveTo(marginLeft, currentY)
+            .lineTo(marginLeft + contentWidth, currentY)
             .strokeColor(BRAND_COLORS.answerLine)
             .lineWidth(0.5)
             .stroke();
+
+        currentY += ANSWER_LINE_HEIGHT;
     }
 
     // Update doc.y to after the lines
-    doc.y = startY + (lineCount * ANSWER_LINE_HEIGHT) + 10;
+    doc.y = currentY + 10;
 }
 
 /**
