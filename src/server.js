@@ -24,6 +24,34 @@ app.use(cors({
         : '*',
     credentials: true
 }));
+
+// IMPORTANT: Stripe webhook must be BEFORE bodyParser.json() to access raw body
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+        console.warn('⚠️ STRIPE_WEBHOOK_SECRET not configured, skipping webhook verification');
+        return res.status(400).send('Webhook secret not configured');
+    }
+
+    try {
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+
+        console.log(`✅ Webhook verified: ${event.type}`);
+
+        // Handle the event
+        await stripeService.handleWebhook(event);
+
+        res.json({ received: true });
+    } catch (err) {
+        console.error('❌ Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+});
+
+// JSON body parser (after webhook route)
 app.use(bodyParser.json());
 
 // Serve public files (free tier)
@@ -45,30 +73,6 @@ let isShuttingDown = false;
 
 // Mount premium routes
 app.use('/api/premium', premiumRoutes);
-
-// Stripe webhook (must be before bodyParser middleware for raw body)
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-    if (!webhookSecret) {
-        console.warn('⚠️ STRIPE_WEBHOOK_SECRET not configured, skipping webhook verification');
-        return res.status(400).send('Webhook secret not configured');
-    }
-
-    try {
-        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-        const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-
-        // Handle the event
-        await stripeService.handleWebhook(event);
-
-        res.json({ received: true });
-    } catch (err) {
-        console.error('❌ Webhook signature verification failed:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-});
 
 /**
  * POST /api/generate
