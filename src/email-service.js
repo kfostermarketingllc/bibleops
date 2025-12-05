@@ -149,7 +149,6 @@ async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [], baseUrl
         <div class="highlight">
             <p><strong>📖 Study Focus:</strong> ${studyFocus}</p>
             <p><strong>📦 Included Materials:</strong> ${pdfs.length} specialized study guides</p>
-            <p><strong>⏱️ Generation:</strong> Powered by advanced AI technology</p>
         </div>
 
         <p style="background: #f7fafc; padding: 20px; border-left: 4px solid #48bb78; margin: 20px 0; text-align: center;">
@@ -187,7 +186,6 @@ async function sendCurriculumEmail({ toEmail, passage, theme, pdfs = [], baseUrl
 
     <div class="footer">
         <p><strong>BibleOps</strong> - Comprehensive curriculum creation with precision and theological care</p>
-        <p>Powered by Advanced AI Technology</p>
         <p style="margin-top: 15px; font-size: 0.75rem;">
             Built on proven methodologies from Gordon Fee, Douglas Stuart, Rick Warren, Jen Wilkin, and more
         </p>
@@ -227,7 +225,6 @@ Build another study at: https://bibleops.com
 
 ---
 BibleOps - Comprehensive curriculum creation with precision and theological care
-Powered by Advanced AI Technology
 bibleops.com
         `;
 

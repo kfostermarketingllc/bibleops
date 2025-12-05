@@ -240,7 +240,7 @@ async function processGenerationInBackground(jobId, formData) {
                 'bookResearch', 'foundation', 'bibleVersion', 'theology', 'biblicalContext',
                 'hermeneutics', 'originalLanguages', 'crossReference',
                 'application', 'smallGroup', 'prayer', 'teachingMethods',
-                'studentGuide', 'leaderGuide'
+                'studentGuide', 'leaderGuide', 'individualGuide'
             ];
 
             for (const key of pdfKeys) {
