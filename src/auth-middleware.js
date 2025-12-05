@@ -70,13 +70,15 @@ async function verifyToken(req, res, next) {
 /**
  * Require premium subscription middleware
  * Must be used after verifyToken
+ * Allows: premium, annual, church tiers
  */
 function requirePremium(req, res, next) {
     if (!req.user) {
         return res.status(401).json({ error: 'Authentication required' });
     }
 
-    if (req.user.tier === 'free') {
+    const premiumTiers = ['premium', 'annual', 'church'];
+    if (!premiumTiers.includes(req.user.tier)) {
         return res.status(403).json({
             error: 'Premium subscription required',
             upgradeUrl: '/premium/signup.html'

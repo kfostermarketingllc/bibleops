@@ -229,6 +229,86 @@ router.post('/create-portal-session', verifyToken, async (req, res) => {
 });
 
 // ============================================
+// SUBSCRIPTION SYNC ROUTE
+// ============================================
+
+/**
+ * POST /api/premium/sync-subscription
+ * Sync subscription status from Stripe (handles webhook race condition)
+ * Called when user returns from checkout
+ */
+router.post('/sync-subscription', verifyToken, async (req, res) => {
+    try {
+        const user = req.user;
+
+        // If user already has Stripe customer ID, verify directly with Stripe
+        let stripeCustomerId = user.stripe_customer_id;
+
+        // If no customer ID yet, look up by email
+        if (!stripeCustomerId) {
+            const customer = await stripeService.getCustomerByEmail(user.email);
+            if (customer) {
+                stripeCustomerId = customer.id;
+                // Update user with customer ID
+                await db.updateUserStripeCustomerId(user.id, stripeCustomerId);
+            }
+        }
+
+        if (!stripeCustomerId) {
+            return res.json({
+                synced: false,
+                tier: user.tier,
+                message: 'No Stripe customer found'
+            });
+        }
+
+        // Verify subscription status directly with Stripe
+        const subscriptionInfo = await stripeService.verifySubscriptionStatus(stripeCustomerId);
+
+        if (!subscriptionInfo) {
+            return res.json({
+                synced: false,
+                tier: user.tier,
+                message: 'No active subscription found in Stripe'
+            });
+        }
+
+        // Update user tier if different
+        if (user.tier !== subscriptionInfo.tier) {
+            await db.query(
+                'UPDATE users SET tier = $1 WHERE id = $2',
+                [subscriptionInfo.tier, user.id]
+            );
+            console.log(`✅ Synced user ${user.email} tier to: ${subscriptionInfo.tier}`);
+        }
+
+        // Upsert subscription record
+        await db.upsertSubscription({
+            customerId: stripeCustomerId,
+            subscriptionId: subscriptionInfo.subscriptionId,
+            priceId: null, // Will be filled by webhook
+            planType: subscriptionInfo.planType,
+            status: subscriptionInfo.status,
+            currentPeriodStart: Math.floor(subscriptionInfo.currentPeriodStart.getTime() / 1000),
+            currentPeriodEnd: Math.floor(subscriptionInfo.currentPeriodEnd.getTime() / 1000),
+            trialStart: null,
+            trialEnd: null
+        });
+
+        res.json({
+            synced: true,
+            tier: subscriptionInfo.tier,
+            subscriptionStatus: subscriptionInfo.status,
+            periodEnd: subscriptionInfo.currentPeriodEnd
+        });
+
+    } catch (error) {
+        console.error('Sync subscription error:', error);
+        res.status(500).json({ error: 'Failed to sync subscription status' });
+    }
+});
+
+// ============================================
 // USAGE & STATS ROUTES
 // ============================================
 

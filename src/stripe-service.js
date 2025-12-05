@@ -322,14 +322,24 @@ function getTierLimits(tier) {
                 overageAllowed: false
             };
         case 'premium':
-        case 'annual':
+            // Individual monthly: 4 per month + $4.99 overage
             return {
-                monthlyLimit: 25,
+                monthlyLimit: 4,
                 period: 'monthly',
                 overageAllowed: true,
                 overagePrice: 4.99
             };
+        case 'annual':
+            // Annual: 48 per year (4/month equivalent) + $4.99 overage
+            return {
+                monthlyLimit: 4,  // Still enforce 4/month to prevent binge usage
+                yearlyLimit: 48,
+                period: 'yearly',
+                overageAllowed: true,
+                overagePrice: 4.99
+            };
         case 'church':
+            // Church/Ministry: Unlimited
             return {
                 monthlyLimit: Infinity,
                 period: 'monthly',
@@ -344,11 +354,79 @@ function getTierLimits(tier) {
     }
 }
 
+/**
+ * Verify subscription status directly with Stripe
+ * Used when returning from checkout to handle webhook race condition
+ * @param {string} customerId - Stripe customer ID
+ * @returns {Promise<Object|null>} Subscription info or null
+ */
+async function verifySubscriptionStatus(customerId) {
+    try {
+        if (!customerId) return null;
+
+        const subscriptions = await stripe.subscriptions.list({
+            customer: customerId,
+            status: 'active',
+            limit: 1
+        });
+
+        if (subscriptions.data.length === 0) return null;
+
+        const subscription = subscriptions.data[0];
+        const priceId = subscription.items.data[0].price.id;
+
+        // Determine tier from price ID
+        let tier = 'premium';
+        let planType = 'individual';
+
+        if (priceId === PRICE_IDS.individual_annual) {
+            tier = 'annual';
+            planType = 'annual';
+        } else if (priceId === PRICE_IDS.church_monthly) {
+            tier = 'church';
+            planType = 'church';
+        }
+
+        return {
+            subscriptionId: subscription.id,
+            status: subscription.status,
+            tier: tier,
+            planType: planType,
+            currentPeriodStart: new Date(subscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(subscription.current_period_end * 1000)
+        };
+    } catch (error) {
+        console.error('Error verifying subscription status:', error);
+        return null;
+    }
+}
+
+/**
+ * Get customer by email (for syncing after checkout)
+ * @param {string} email - Customer email
+ * @returns {Promise<Object|null>} Customer object or null
+ */
+async function getCustomerByEmail(email) {
+    try {
+        const customers = await stripe.customers.list({
+            email: email,
+            limit: 1
+        });
+
+        return customers.data.length > 0 ? customers.data[0] : null;
+    } catch (error) {
+        console.error('Error getting customer by email:', error);
+        return null;
+    }
+}
+
 module.exports = {
     createCheckoutSession,
     createPortalSession,
     chargeOverage,
     handleWebhook,
     getTierLimits,
+    verifySubscriptionStatus,
+    getCustomerByEmail,
     PRICE_IDS
 };
