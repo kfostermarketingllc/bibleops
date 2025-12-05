@@ -17,12 +17,52 @@ let pendingFormData = null;
 
 // Load dashboard data on page load
 document.addEventListener('DOMContentLoaded', async () => {
+    // Check if returning from checkout
+    const urlParams = new URLSearchParams(window.location.search);
+    const checkoutStatus = urlParams.get('checkout');
+
+    if (checkoutStatus === 'success') {
+        // Sync subscription status from Stripe (handles webhook race condition)
+        await syncSubscriptionStatus();
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     await loadUserInfo();
     await loadUsageStats();
     await loadGenerationHistory();
     setupEventListeners();
     setupModalHandlers();
 });
+
+// Sync subscription status after checkout
+async function syncSubscriptionStatus() {
+    try {
+        console.log('🔄 Syncing subscription status...');
+        const response = await BibleOpsApp.apiRequest('/api/premium/sync-subscription', {
+            method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (data.synced) {
+            console.log(`✅ Subscription synced: ${data.tier}`);
+            // Update stored user info with new tier
+            const storedUser = BibleOpsApp.getCurrentUser();
+            if (storedUser) {
+                storedUser.tier = data.tier;
+                localStorage.setItem('bibleops_user', JSON.stringify(storedUser));
+            }
+        } else {
+            console.log('ℹ️ Subscription not synced:', data.message);
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Failed to sync subscription:', error);
+        return null;
+    }
+}
 
 // Load user information
 async function loadUserInfo() {
@@ -59,10 +99,26 @@ async function loadUsageStats() {
             // Update overage count
             document.getElementById('overageCount').textContent = data.overageCount || 0;
 
-            // Update subscription status
+            // Update subscription status with proper tier name
             const statusElement = document.getElementById('subscriptionStatus');
             const statusCard = statusElement.closest('.stat-card');
-            statusElement.textContent = data.subscriptionStatus || 'Active';
+
+            // Display appropriate subscription status based on tier
+            let statusText = 'Free';
+            switch (data.tier) {
+                case 'premium':
+                    statusText = 'Premium (Monthly)';
+                    break;
+                case 'annual':
+                    statusText = 'Premium (Annual)';
+                    break;
+                case 'church':
+                    statusText = 'Church/Ministry';
+                    break;
+                default:
+                    statusText = 'Free';
+            }
+            statusElement.textContent = statusText;
 
             // Style status card based on tier
             statusCard.classList.remove('free', 'inactive');
@@ -92,6 +148,12 @@ function updateUpgradeBanner(data) {
     const message = document.getElementById('upgradeBannerMessage');
     const btn = document.getElementById('upgradeBannerBtn');
 
+    // Hide banner for all premium/subscribed users
+    if (data.tier === 'premium' || data.tier === 'annual' || data.tier === 'church') {
+        banner.style.display = 'none';
+        return;
+    }
+
     if (data.tier === 'free') {
         // Free user - show upgrade prompt
         banner.style.display = 'block';
@@ -107,7 +169,7 @@ function updateUpgradeBanner(data) {
         btn.textContent = 'View Plans';
         btn.onclick = () => window.location.href = '/premium/index.html#pricing';
     } else {
-        // Premium user with available generations
+        // Hide for any other case
         banner.style.display = 'none';
     }
 }

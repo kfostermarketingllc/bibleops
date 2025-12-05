@@ -153,23 +153,34 @@ async function handleCheckoutCompleted(session) {
     const customerId = session.customer;
     const subscriptionId = session.subscription;
 
-    console.log(`✅ Checkout completed for ${email}`);
+    console.log(`✅ Checkout completed for ${email}, customer: ${customerId}`);
 
     // Get or create user
     let user = await db.getUserByEmail(email);
 
-    if (user && user.tier === 'free') {
-        // Upgrade existing free user
-        console.log(`⬆️ Upgrading free user: ${email}`);
+    if (user) {
+        // Update existing user with Stripe customer ID
+        console.log(`⬆️ Updating user ${email} with Stripe customer ID: ${customerId}`);
         await db.updateUserStripeCustomerId(user.id, customerId);
-    } else if (!user) {
+
+        // Also update tier to premium immediately (subscription.created will refine this)
+        await db.query(
+            'UPDATE users SET tier = $1 WHERE id = $2',
+            ['premium', user.id]
+        );
+        console.log(`✅ User ${email} tier updated to premium`);
+    } else {
         // Create new premium user (shouldn't happen, but handle it)
         console.log(`🆕 Creating new premium user: ${email}`);
         user = await db.createUser(email, null); // No password yet
         await db.updateUserStripeCustomerId(user.id, customerId);
+        await db.query(
+            'UPDATE users SET tier = $1 WHERE id = $2',
+            ['premium', user.id]
+        );
     }
 
-    // Subscription will be created in subscription.created event
+    // Subscription details will be refined in subscription.created event
 }
 
 /**
@@ -181,7 +192,7 @@ async function handleSubscriptionUpdate(subscription) {
     const status = subscription.status;
     const priceId = subscription.items.data[0].price.id;
 
-    console.log(`🔄 Subscription ${subscriptionId} status: ${status}`);
+    console.log(`🔄 Subscription ${subscriptionId} status: ${status}, customer: ${customerId}, price: ${priceId}`);
 
     // Determine plan type
     let planType = 'individual';
@@ -195,6 +206,8 @@ async function handleSubscriptionUpdate(subscription) {
         tier = 'church';
     }
 
+    console.log(`📋 Determined plan: ${planType}, tier: ${tier}`);
+
     // Get user by Stripe customer ID
     const user = await db.query(
         'SELECT * FROM users WHERE stripe_customer_id = $1',
@@ -207,27 +220,45 @@ async function handleSubscriptionUpdate(subscription) {
     }
 
     const userId = user.rows[0].id;
+    console.log(`👤 Found user ID: ${userId}`);
 
     // Update user tier
     await db.query(
         'UPDATE users SET tier = $1 WHERE id = $2',
         [tier, userId]
     );
+    console.log(`✅ User tier updated to: ${tier}`);
 
-    // Upsert subscription
-    await db.upsertSubscription({
-        customerId: customerId,
-        subscriptionId: subscriptionId,
-        priceId: priceId,
-        planType: planType,
-        status: status,
-        currentPeriodStart: subscription.current_period_start,
-        currentPeriodEnd: subscription.current_period_end,
-        trialStart: subscription.trial_start,
-        trialEnd: subscription.trial_end
-    });
-
-    console.log(`✅ Subscription updated for user ${userId}`);
+    // Create subscription record directly (not using subquery)
+    try {
+        await db.query(
+            `INSERT INTO subscriptions
+             (user_id, stripe_subscription_id, stripe_price_id, plan_type, status,
+              current_period_start, current_period_end, trial_start, trial_end)
+             VALUES ($1, $2, $3, $4, $5, to_timestamp($6), to_timestamp($7),
+                     to_timestamp($8), to_timestamp($9))
+             ON CONFLICT (stripe_subscription_id) DO UPDATE
+             SET status = $5,
+                 current_period_start = to_timestamp($6),
+                 current_period_end = to_timestamp($7),
+                 updated_at = NOW()`,
+            [
+                userId,
+                subscriptionId,
+                priceId,
+                planType,
+                status,
+                subscription.current_period_start,
+                subscription.current_period_end,
+                subscription.trial_start || null,
+                subscription.trial_end || null
+            ]
+        );
+        console.log(`✅ Subscription record created/updated for user ${userId}`);
+    } catch (subError) {
+        console.error(`❌ Failed to upsert subscription:`, subError.message);
+        throw subError;
+    }
 }
 
 /**

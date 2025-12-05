@@ -104,6 +104,7 @@ CREATE TABLE curriculum_generations (
     -- S3 storage
     s3_folder VARCHAR(255), -- S3 folder path where PDFs are stored
     pdf_count INTEGER DEFAULT 0, -- Number of PDFs generated
+    s3_keys JSONB, -- Array of S3 keys for each PDF file [{title, filename, s3Key}, ...]
 
     created_at TIMESTAMP DEFAULT NOW()
 );
