@@ -34,10 +34,14 @@ async function generateBibleStudy(formData) {
         // Build context object for all agents
         const context = buildContext(formData);
 
-        // Step 1: BOOK RESEARCH AGENT (if book study)
+        // Get selected optional outputs (default to empty array if not provided)
+        const selectedOutputs = formData.selectedOutputs || [];
+        console.log(`📋 Selected optional outputs: ${selectedOutputs.length > 0 ? selectedOutputs.join(', ') : 'None'}`);
+
+        // Step 1: BOOK RESEARCH AGENT (if book study AND user selected it)
         let bookResearchContent = null;
-        if (context.bookTitle) {
-            console.log('📖 Agent 1/14: Book Research & Analysis Specialist');
+        if (context.bookTitle && selectedOutputs.includes('bookResearch')) {
+            console.log('📖 Book Research & Analysis Specialist');
             bookResearchContent = await callAgent(
                 AGENTS.bookResearch,
                 context,
@@ -55,23 +59,26 @@ async function generateBibleStudy(formData) {
             context.bookResearchDocument = bookResearchContent;
         }
 
-        // Step 2: FOUNDATION AGENT (runs after book research if applicable)
-        console.log(`📚 Agent ${context.bookTitle ? '2/14' : '1/14'}: Foundational Materials & Reference Specialist`);
-        const foundationContent = await callAgent(
-            AGENTS.foundation,
-            context,
-            bookResearchContent // Pass book research if available
-        );
-        results.foundation = await generatePDF(
-            foundationContent,
-            'Foundational Framework',
-            `foundation_${timestamp}.pdf`,
-            context
-        );
-        console.log('✅ Foundation complete\n');
+        // Step 2: FOUNDATION AGENT (only if user selected it)
+        let foundationContent = null;
+        if (selectedOutputs.includes('foundation')) {
+            console.log('📚 Foundational Materials & Reference Specialist');
+            foundationContent = await callAgent(
+                AGENTS.foundation,
+                context,
+                bookResearchContent // Pass book research if available
+            );
+            results.foundation = await generatePDF(
+                foundationContent,
+                'Foundational Framework',
+                `foundation_${timestamp}.pdf`,
+                context
+            );
+            console.log('✅ Foundation complete\n');
 
-        // Add foundation to context for all subsequent agents
-        context.foundationDocument = foundationContent;
+            // Add foundation to context for all subsequent agents
+            context.foundationDocument = foundationContent;
+        }
 
         // Steps 3-14: Run agents in BATCHES to respect Anthropic rate limits
         // Rate limit: 20,000 input tokens/min
@@ -81,16 +88,8 @@ async function generateBibleStudy(formData) {
         const isIndividualStudy = context.groupSize &&
             context.groupSize.toLowerCase().includes('individual');
 
-        // Base agents that apply to all study types
+        // Base agents that apply to all study types (optional - user selects which to include)
         const baseAgents = [
-            {
-                agent: AGENTS.bibleVersion,
-                key: 'bibleVersion',
-                title: 'Bible Translation Recommendation',
-                filename: `bible_version_${timestamp}.pdf`,
-                icon: '📖',
-                name: 'Bible Translation'
-            },
             {
                 agent: AGENTS.theology,
                 key: 'theology',
@@ -197,14 +196,21 @@ async function generateBibleStudy(formData) {
             }
         ];
 
+        // Filter base agents based on user's selected outputs
+        const filteredBaseAgents = baseAgents.filter(agent => selectedOutputs.includes(agent.key));
+
         // Select appropriate agents based on study type
+        // Base agents are optional (filtered by selectedOutputs)
+        // Group/Individual agents are always included
         const allAgents = isIndividualStudy
-            ? [...baseAgents, ...individualStudyAgents]
-            : [...baseAgents, ...groupStudyAgents];
+            ? [...filteredBaseAgents, ...individualStudyAgents]
+            : [...filteredBaseAgents, ...groupStudyAgents];
 
         if (isIndividualStudy) {
             console.log('📖 Individual study detected - using Individual Study Guide agent');
         }
+
+        console.log(`📦 Running ${filteredBaseAgents.length} optional agents + ${isIndividualStudy ? '1 Individual' : '4 Group'} study guide(s)`);
 
         const totalBatchAgents = allAgents.length;
         const totalBatches = Math.ceil(totalBatchAgents / 4);
@@ -257,8 +263,10 @@ async function generateBibleStudy(formData) {
             results[key] = pdf;
         });
 
-        // Calculate total agents: foundation (1) + book research (0 or 1) + batch agents
-        const totalAgents = 1 + (context.bookTitle ? 1 : 0) + totalBatchAgents;
+        // Calculate total agents: optional book research + optional foundation + batch agents
+        const bookResearchCount = (context.bookTitle && selectedOutputs.includes('bookResearch')) ? 1 : 0;
+        const foundationCount = selectedOutputs.includes('foundation') ? 1 : 0;
+        const totalAgents = bookResearchCount + foundationCount + totalBatchAgents;
         console.log(`🎉 ALL ${totalAgents} AGENTS COMPLETED SUCCESSFULLY!\n`);
         return results;
 

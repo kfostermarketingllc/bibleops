@@ -2,6 +2,16 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 
+// Brand colors
+const BRAND_COLORS = {
+    primary: '#2C5530',      // Deep forest green
+    secondary: '#4A7C59',    // Lighter green
+    accent: '#8B4513',       // Warm brown
+    text: '#333333',         // Dark gray for body text
+    lightGray: '#666666',    // For secondary text
+    border: '#CCCCCC'        // For lines
+};
+
 /**
  * Generate a professional PDF document from content
  */
@@ -17,11 +27,12 @@ async function generatePDF(content, title, filename, context) {
             const doc = new PDFDocument({
                 size: 'LETTER',
                 margins: {
-                    top: 72,
-                    bottom: 72,
+                    top: 90,
+                    bottom: 90,
                     left: 72,
                     right: 72
-                }
+                },
+                bufferPages: true
             });
 
             const outputPath = path.join(outputDir, filename);
@@ -29,14 +40,17 @@ async function generatePDF(content, title, filename, context) {
 
             doc.pipe(writeStream);
 
+            // Clean the content before processing
+            const cleanedContent = cleanMarkdownContent(content);
+
             // Header
             addHeader(doc, title, context);
 
             // Add spacing
-            doc.moveDown(2);
+            doc.moveDown(1.5);
 
             // Content
-            addContent(doc, content);
+            addContent(doc, cleanedContent);
 
             // Footer on all pages
             addFooter(doc, context);
@@ -64,139 +78,337 @@ async function generatePDF(content, title, filename, context) {
 }
 
 /**
- * Add header to PDF
+ * Clean markdown artifacts from AI-generated content
+ */
+function cleanMarkdownContent(content) {
+    let cleaned = content;
+
+    // Remove horizontal rules (---, ***, ___)
+    cleaned = cleaned.replace(/^[-*_]{3,}\s*$/gm, '');
+
+    // Remove excessive asterisks used for emphasis markers (but keep content)
+    // Handle ***bold italic*** -> content
+    cleaned = cleaned.replace(/\*{3}([^*]+)\*{3}/g, '$1');
+
+    // Handle **bold** -> content (will be styled by addContent)
+    // Keep these for now as addContent handles them
+
+    // Handle *italic* -> content
+    cleaned = cleaned.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '$1');
+
+    // Remove code blocks markers
+    cleaned = cleaned.replace(/```[\w]*\n?/g, '');
+    cleaned = cleaned.replace(/`([^`]+)`/g, '$1');
+
+    // Clean up excessive blank lines (more than 2 in a row)
+    cleaned = cleaned.replace(/\n{4,}/g, '\n\n\n');
+
+    // Remove leading/trailing whitespace from lines
+    cleaned = cleaned.split('\n').map(line => line.trimEnd()).join('\n');
+
+    // Remove any standalone hash symbols that aren't headers
+    cleaned = cleaned.replace(/^#+\s*$/gm, '');
+
+    return cleaned;
+}
+
+/**
+ * Add header to PDF with BibleOps branding
  */
 function addHeader(doc, title, context) {
-    // Title
-    doc.fontSize(20)
+    const pageWidth = doc.page.width;
+    const marginLeft = 72;
+    const marginRight = 72;
+    const contentWidth = pageWidth - marginLeft - marginRight;
+
+    // BibleOps Logo/Brand Name
+    doc.fontSize(14)
         .font('Helvetica-Bold')
+        .fillColor(BRAND_COLORS.primary)
+        .text('BibleOps', marginLeft, 40, { align: 'left' });
+
+    // Tagline
+    doc.fontSize(8)
+        .font('Helvetica')
+        .fillColor(BRAND_COLORS.lightGray)
+        .text('AI-Powered Bible Study Curriculum', marginLeft, 56, { align: 'left' });
+
+    // Decorative line under brand
+    doc.moveTo(marginLeft, 72)
+        .lineTo(pageWidth - marginRight, 72)
+        .strokeColor(BRAND_COLORS.primary)
+        .lineWidth(2)
+        .stroke();
+
+    // Reset position for main content
+    doc.y = 90;
+
+    // Document Title
+    doc.fontSize(22)
+        .font('Helvetica-Bold')
+        .fillColor(BRAND_COLORS.primary)
         .text(title, { align: 'center' });
 
     doc.moveDown(0.5);
 
-    // Study info
-    doc.fontSize(10)
+    // Study Focus
+    const studyFocus = context.passage || context.theme || 'Bible Study';
+    doc.fontSize(12)
         .font('Helvetica')
-        .text(`Bible Study: ${context.passage || context.theme}`, { align: 'center' });
+        .fillColor(BRAND_COLORS.text)
+        .text(studyFocus, { align: 'center' });
 
-    doc.fontSize(9)
-        .text(`${context.denomination} | ${context.bibleVersion} | ${context.ageGroup}`, { align: 'center' });
+    doc.moveDown(0.3);
 
-    // Horizontal line
-    doc.moveDown(0.5);
-    const lineY = doc.y;
-    doc.moveTo(72, lineY)
-        .lineTo(540, lineY)
+    // Study Details (denomination, version, audience)
+    const details = [
+        context.denomination,
+        context.bibleVersion,
+        context.ageGroup
+    ].filter(Boolean).join('  •  ');
+
+    doc.fontSize(10)
+        .fillColor(BRAND_COLORS.lightGray)
+        .text(details, { align: 'center' });
+
+    // Decorative divider
+    doc.moveDown(0.8);
+    const dividerY = doc.y;
+    const dividerWidth = 150;
+    const dividerStart = (pageWidth - dividerWidth) / 2;
+
+    doc.moveTo(dividerStart, dividerY)
+        .lineTo(dividerStart + dividerWidth, dividerY)
+        .strokeColor(BRAND_COLORS.secondary)
+        .lineWidth(1)
         .stroke();
+
+    // Reset text color for content
+    doc.fillColor(BRAND_COLORS.text);
 }
 
 /**
- * Add content to PDF with formatting
+ * Add content to PDF with professional formatting
  */
 function addContent(doc, content) {
     const lines = content.split('\n');
-    let currentFontSize = 11;
-    let currentFont = 'Helvetica';
+    const marginLeft = 72;
+    const pageWidth = doc.page.width;
+    const contentWidth = pageWidth - marginLeft - 72;
 
-    for (let line of lines) {
-        // Check if we need a new page
-        if (doc.y > 700) {
+    // Track list state for proper spacing
+    let inList = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        // Check if we need a new page (leave room for footer)
+        if (doc.y > 680) {
             doc.addPage();
+            // Add simple header on continuation pages
+            doc.fontSize(10)
+                .font('Helvetica')
+                .fillColor(BRAND_COLORS.lightGray)
+                .text('BibleOps', marginLeft, 50);
+            doc.moveTo(marginLeft, 65)
+                .lineTo(pageWidth - 72, 65)
+                .strokeColor(BRAND_COLORS.border)
+                .lineWidth(0.5)
+                .stroke();
+            doc.y = 85;
+            doc.fillColor(BRAND_COLORS.text);
         }
 
-        // Detect markdown-style headers and format accordingly
-        if (line.startsWith('# ')) {
-            doc.fontSize(16)
+        // Parse headers (# ## ### ####)
+        const h1Match = line.match(/^#\s+(.+)$/);
+        const h2Match = line.match(/^##\s+(.+)$/);
+        const h3Match = line.match(/^###\s+(.+)$/);
+        const h4Match = line.match(/^####\s+(.+)$/);
+
+        if (h1Match) {
+            inList = false;
+            doc.moveDown(1);
+            doc.fontSize(18)
                 .font('Helvetica-Bold')
-                .text(line.substring(2), { continued: false });
+                .fillColor(BRAND_COLORS.primary)
+                .text(cleanText(h1Match[1]), { align: 'left' });
             doc.moveDown(0.5);
-            currentFont = 'Helvetica';
-            currentFontSize = 11;
-        } else if (line.startsWith('## ')) {
+            doc.fillColor(BRAND_COLORS.text);
+        } else if (h2Match) {
+            inList = false;
+            doc.moveDown(0.8);
+            doc.fontSize(15)
+                .font('Helvetica-Bold')
+                .fillColor(BRAND_COLORS.secondary)
+                .text(cleanText(h2Match[1]), { align: 'left' });
+            doc.moveDown(0.4);
+            doc.fillColor(BRAND_COLORS.text);
+        } else if (h3Match) {
+            inList = false;
+            doc.moveDown(0.6);
+            doc.fontSize(13)
+                .font('Helvetica-Bold')
+                .fillColor(BRAND_COLORS.text)
+                .text(cleanText(h3Match[1]), { align: 'left' });
             doc.moveDown(0.3);
-            doc.fontSize(14)
+        } else if (h4Match) {
+            inList = false;
+            doc.moveDown(0.4);
+            doc.fontSize(11)
                 .font('Helvetica-Bold')
-                .text(line.substring(3), { continued: false });
-            doc.moveDown(0.3);
-            currentFont = 'Helvetica';
-            currentFontSize = 11;
-        } else if (line.startsWith('### ')) {
+                .fillColor(BRAND_COLORS.text)
+                .text(cleanText(h4Match[1]), { align: 'left' });
             doc.moveDown(0.2);
-            doc.fontSize(12)
-                .font('Helvetica-Bold')
-                .text(line.substring(4), { continued: false });
-            doc.moveDown(0.2);
-            currentFont = 'Helvetica';
-            currentFontSize = 11;
-        } else if (line.startsWith('**') && line.endsWith('**')) {
-            // Bold text
-            doc.fontSize(currentFontSize)
-                .font('Helvetica-Bold')
-                .text(line.replace(/\*\*/g, ''), { continued: false });
-            currentFont = 'Helvetica';
-        } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        } else if (line.match(/^[-*]\s+/)) {
             // Bullet point
-            doc.fontSize(currentFontSize)
-                .font(currentFont)
-                .text('  • ' + line.substring(2), {
-                    continued: false,
-                    indent: 10
-                });
-        } else if (line.trim() === '') {
-            // Empty line - add spacing
-            doc.moveDown(0.5);
-        } else if (line.match(/^\d+\./)) {
+            if (!inList) {
+                doc.moveDown(0.3);
+                inList = true;
+            }
+            const bulletContent = cleanText(line.replace(/^[-*]\s+/, ''));
+
+            doc.fontSize(11)
+                .font('Helvetica')
+                .fillColor(BRAND_COLORS.text);
+
+            doc.text('•  ' + bulletContent, marginLeft + 15, doc.y, {
+                width: contentWidth - 15,
+                align: 'left',
+                indent: 12
+            });
+        } else if (line.match(/^\d+\.\s+/)) {
             // Numbered list
-            doc.fontSize(currentFontSize)
-                .font(currentFont)
-                .text(line, {
-                    continued: false,
-                    indent: 10
-                });
+            if (!inList) {
+                doc.moveDown(0.3);
+                inList = true;
+            }
+            const numberMatch = line.match(/^(\d+)\.\s+(.+)$/);
+            if (numberMatch) {
+                const number = numberMatch[1];
+                const listContent = cleanText(numberMatch[2]);
+
+                doc.fontSize(11)
+                    .font('Helvetica')
+                    .fillColor(BRAND_COLORS.text)
+                    .text(`${number}. ${listContent}`, marginLeft + 15, doc.y, {
+                        width: contentWidth - 15,
+                        align: 'left',
+                        indent: 18
+                    });
+            }
+        } else if (line.trim() === '') {
+            // Empty line
+            inList = false;
+            doc.moveDown(0.4);
         } else {
-            // Regular paragraph
-            doc.fontSize(currentFontSize)
-                .font(currentFont)
-                .text(line, {
-                    align: 'left',
-                    continued: false
-                });
+            // Regular paragraph - check if it's a standalone bold line
+            inList = false;
+            const cleanedLine = cleanText(line.trim());
+
+            if (cleanedLine) {
+                doc.fontSize(11)
+                    .font('Helvetica')
+                    .fillColor(BRAND_COLORS.text)
+                    .text(cleanedLine, marginLeft, doc.y, {
+                        width: contentWidth,
+                        align: 'left'
+                    });
+                doc.moveDown(0.2);
+            }
         }
     }
 }
 
 /**
- * Add footer to all pages
+ * Clean text by removing markdown artifacts
+ */
+function cleanText(text) {
+    if (!text) return '';
+
+    let cleaned = text;
+
+    // Remove bold markers but keep content
+    cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1');
+
+    // Remove italic markers
+    cleaned = cleaned.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '$1');
+
+    // Remove underscores used for emphasis
+    cleaned = cleaned.replace(/__([^_]+)__/g, '$1');
+    cleaned = cleaned.replace(/_([^_\n]+)_/g, '$1');
+
+    // Remove any remaining stray asterisks
+    cleaned = cleaned.replace(/\*+/g, '');
+
+    // Clean up extra whitespace
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+
+    return cleaned;
+}
+
+/**
+ * Add footer to all pages with BibleOps branding
  */
 function addFooter(doc, context) {
     const range = doc.bufferedPageRange();
+    const pageWidth = doc.page.width;
+    const marginLeft = 72;
+    const marginRight = 72;
+    const contentWidth = pageWidth - marginLeft - marginRight;
+
     for (let i = 0; i < range.count; i++) {
         doc.switchToPage(range.start + i);
 
-        // Footer text
-        const bottomY = 720;
-        doc.fontSize(8)
+        const bottomY = 730;
+
+        // Decorative line above footer
+        doc.moveTo(marginLeft, bottomY - 10)
+            .lineTo(pageWidth - marginRight, bottomY - 10)
+            .strokeColor(BRAND_COLORS.border)
+            .lineWidth(0.5)
+            .stroke();
+
+        // BibleOps branding
+        doc.fontSize(9)
+            .font('Helvetica-Bold')
+            .fillColor(BRAND_COLORS.primary)
+            .text('BibleOps', marginLeft, bottomY, {
+                continued: true,
+                width: contentWidth
+            });
+
+        doc.font('Helvetica')
+            .fillColor(BRAND_COLORS.lightGray)
+            .text(`  |  Generated ${new Date().toLocaleDateString()}`, {
+                continued: false
+            });
+
+        // Page number on the right
+        doc.fontSize(9)
             .font('Helvetica')
+            .fillColor(BRAND_COLORS.lightGray)
             .text(
-                `Generated by Bible Study Curriculum Generator | ${new Date().toLocaleDateString()}`,
-                72,
+                `Page ${i + 1} of ${range.count}`,
+                marginLeft,
                 bottomY,
                 {
-                    align: 'center',
-                    width: 468
+                    align: 'right',
+                    width: contentWidth
                 }
             );
 
-        // Page number
-        doc.text(
-            `Page ${i + 1} of ${range.count}`,
-            72,
-            bottomY + 12,
-            {
-                align: 'center',
-                width: 468
-            }
-        );
+        // Website/copyright on second line
+        doc.fontSize(7)
+            .fillColor(BRAND_COLORS.lightGray)
+            .text(
+                'www.bibleops.com',
+                marginLeft,
+                bottomY + 14,
+                {
+                    align: 'center',
+                    width: contentWidth
+                }
+            );
     }
 }
 
