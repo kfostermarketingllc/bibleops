@@ -9,8 +9,13 @@ const BRAND_COLORS = {
     accent: '#8B4513',       // Warm brown
     text: '#333333',         // Dark gray for body text
     lightGray: '#666666',    // For secondary text
-    border: '#CCCCCC'        // For lines
+    border: '#CCCCCC',       // For lines
+    answerLine: '#AAAAAA'    // For answer lines
 };
+
+// Number of answer lines to add after questions
+const ANSWER_LINES_COUNT = 8;
+const ANSWER_LINE_HEIGHT = 22; // pixels between lines
 
 /**
  * Generate a professional PDF document from content
@@ -131,7 +136,7 @@ function addHeader(doc, title, context) {
     doc.fontSize(8)
         .font('Helvetica')
         .fillColor(BRAND_COLORS.lightGray)
-        .text('AI-Powered Bible Study Curriculum', marginLeft, 56, { align: 'left' });
+        .text('Bible Study Curriculum', marginLeft, 56, { align: 'left' });
 
     // Decorative line under brand
     doc.moveTo(marginLeft, 72)
@@ -276,6 +281,11 @@ function addContent(doc, content) {
                 align: 'left',
                 indent: 12
             });
+
+            // Add answer lines if this is a question
+            if (isQuestion(bulletContent)) {
+                addAnswerLines(doc, marginLeft, contentWidth);
+            }
         } else if (line.match(/^\d+\.\s+/)) {
             // Numbered list
             if (!inList) {
@@ -295,6 +305,11 @@ function addContent(doc, content) {
                         align: 'left',
                         indent: 18
                     });
+
+                // Add answer lines if this is a question
+                if (isQuestion(listContent)) {
+                    addAnswerLines(doc, marginLeft, contentWidth);
+                }
             }
         } else if (line.trim() === '') {
             // Empty line
@@ -314,9 +329,66 @@ function addContent(doc, content) {
                         align: 'left'
                     });
                 doc.moveDown(0.2);
+
+                // Add answer lines if this is a question
+                if (isQuestion(cleanedLine)) {
+                    addAnswerLines(doc, marginLeft, contentWidth);
+                }
             }
         }
     }
+}
+
+/**
+ * Check if a line is a question (ends with ?)
+ */
+function isQuestion(text) {
+    if (!text) return false;
+    const cleaned = text.trim();
+    return cleaned.endsWith('?');
+}
+
+/**
+ * Add answer lines below a question for writing responses
+ */
+function addAnswerLines(doc, marginLeft, contentWidth, lineCount = ANSWER_LINES_COUNT) {
+    const startY = doc.y + 8; // Small gap after question
+
+    for (let i = 0; i < lineCount; i++) {
+        const lineY = startY + (i * ANSWER_LINE_HEIGHT);
+
+        // Check if we need a new page
+        if (lineY > 680) {
+            doc.addPage();
+            // Add simple header on continuation pages
+            doc.fontSize(10)
+                .font('Helvetica')
+                .fillColor(BRAND_COLORS.lightGray)
+                .text('BibleOps', marginLeft, 50);
+            doc.moveTo(marginLeft, 65)
+                .lineTo(doc.page.width - 72, 65)
+                .strokeColor(BRAND_COLORS.border)
+                .lineWidth(0.5)
+                .stroke();
+            doc.y = 85;
+            doc.fillColor(BRAND_COLORS.text);
+
+            // Recalculate remaining lines on new page
+            const remainingLines = lineCount - i;
+            addAnswerLines(doc, marginLeft, contentWidth, remainingLines);
+            return;
+        }
+
+        // Draw the answer line
+        doc.moveTo(marginLeft, lineY)
+            .lineTo(marginLeft + contentWidth, lineY)
+            .strokeColor(BRAND_COLORS.answerLine)
+            .lineWidth(0.5)
+            .stroke();
+    }
+
+    // Update doc.y to after the lines
+    doc.y = startY + (lineCount * ANSWER_LINE_HEIGHT) + 10;
 }
 
 /**
