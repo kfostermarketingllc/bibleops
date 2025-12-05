@@ -5,12 +5,23 @@
 // Require authentication
 BibleOpsApp.requireAuth();
 
+// Global state
+let currentUsage = {
+    usageThisMonth: 0,
+    monthlyLimit: 4,
+    tier: 'free',
+    overageAllowed: false
+};
+
+let pendingFormData = null;
+
 // Load dashboard data on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUserInfo();
     await loadUsageStats();
     await loadGenerationHistory();
     setupEventListeners();
+    setupModalHandlers();
 });
 
 // Load user information
@@ -29,8 +40,17 @@ async function loadUsageStats() {
         const data = await response.json();
 
         if (response.ok) {
+            // Store in global state
+            currentUsage = {
+                usageThisMonth: data.usageThisMonth || 0,
+                monthlyLimit: data.monthlyLimit || 4,
+                tier: data.tier || 'free',
+                overageAllowed: data.overageAllowed || false,
+                overagePrice: data.overagePrice || 4.99
+            };
+
             // Update usage count
-            document.getElementById('usageCount').textContent = `${data.usageThisMonth || 0}`;
+            document.getElementById('usageCount').textContent = `${currentUsage.usageThisMonth}`;
 
             // Update days remaining
             const daysRemaining = calculateDaysRemaining(data.periodEnd);
@@ -41,15 +61,54 @@ async function loadUsageStats() {
 
             // Update subscription status
             const statusElement = document.getElementById('subscriptionStatus');
+            const statusCard = statusElement.closest('.stat-card');
             statusElement.textContent = data.subscriptionStatus || 'Active';
 
+            // Style status card based on tier
+            statusCard.classList.remove('free', 'inactive');
+            if (data.tier === 'free') {
+                statusCard.classList.add('free');
+            }
+
+            // Show/hide upgrade banner and overage note
+            updateUpgradeBanner(data);
+
             // Show overage warning if at limit
-            if (data.usageThisMonth >= 4) {
+            if (currentUsage.usageThisMonth >= currentUsage.monthlyLimit && currentUsage.overageAllowed) {
                 document.getElementById('overageNote').style.display = 'block';
+            } else {
+                document.getElementById('overageNote').style.display = 'none';
             }
         }
     } catch (error) {
         console.error('Failed to load usage stats:', error);
+    }
+}
+
+// Update upgrade banner based on user status
+function updateUpgradeBanner(data) {
+    const banner = document.getElementById('upgradeBanner');
+    const title = document.getElementById('upgradeBannerTitle');
+    const message = document.getElementById('upgradeBannerMessage');
+    const btn = document.getElementById('upgradeBannerBtn');
+
+    if (data.tier === 'free') {
+        // Free user - show upgrade prompt
+        banner.style.display = 'block';
+        title.textContent = 'Upgrade to Premium';
+        message.textContent = 'Get 4 curriculum generations per month, plus $4.99 for additional generations.';
+        btn.textContent = 'Upgrade Now - $19.97/mo';
+        btn.onclick = () => startCheckout('individual_monthly');
+    } else if (data.usageThisMonth >= data.monthlyLimit && !data.overageAllowed) {
+        // At limit and no overage allowed (shouldn't happen for premium)
+        banner.style.display = 'block';
+        title.textContent = 'Monthly Limit Reached';
+        message.textContent = 'Upgrade to unlock more generations.';
+        btn.textContent = 'View Plans';
+        btn.onclick = () => window.location.href = '/premium/index.html#pricing';
+    } else {
+        // Premium user with available generations
+        banner.style.display = 'none';
     }
 }
 
@@ -175,13 +234,81 @@ function setupEventListeners() {
     });
 }
 
+// Setup modal handlers for overage confirmation
+function setupModalHandlers() {
+    const modal = document.getElementById('overageModal');
+    const closeBtn = document.getElementById('closeOverageModal');
+    const cancelBtn = document.getElementById('cancelOverageBtn');
+    const confirmBtn = document.getElementById('confirmOverageBtn');
+
+    // Close modal handlers
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+            pendingFormData = null;
+        });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+            pendingFormData = null;
+        });
+    }
+
+    // Click backdrop to close
+    const backdrop = modal?.querySelector('.modal-backdrop');
+    if (backdrop) {
+        backdrop.addEventListener('click', () => {
+            modal.style.display = 'none';
+            pendingFormData = null;
+        });
+    }
+
+    // Confirm overage and proceed with generation
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async () => {
+            if (!pendingFormData) return;
+
+            modal.style.display = 'none';
+
+            // Add overage confirmation flag
+            pendingFormData.confirmOverage = true;
+
+            // Proceed with generation
+            await executeGeneration(pendingFormData);
+            pendingFormData = null;
+        });
+    }
+}
+
+// Start Stripe checkout for subscription upgrade
+async function startCheckout(planType) {
+    try {
+        const response = await BibleOpsApp.apiRequest('/api/premium/create-checkout-session', {
+            method: 'POST',
+            body: JSON.stringify({ planType })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.url) {
+            window.location.href = data.url;
+        } else {
+            alert(data.error || 'Failed to start checkout. Please try again.');
+        }
+    } catch (error) {
+        console.error('Checkout error:', error);
+        alert('Failed to start checkout. Please try again.');
+    }
+}
+
 // Handle curriculum generation
 async function handleGenerate(e) {
     e.preventDefault();
 
     const formError = document.getElementById('formError');
     const formSuccess = document.getElementById('formSuccess');
-    const submitBtn = document.getElementById('generateBtn');
 
     // Hide messages
     formError.style.display = 'none';
@@ -236,6 +363,31 @@ async function handleGenerate(e) {
         return;
     }
 
+    // Check if user is at their limit and needs overage confirmation
+    if (currentUsage.usageThisMonth >= currentUsage.monthlyLimit) {
+        if (currentUsage.tier === 'free') {
+            // Free users can't generate more - show upgrade prompt
+            formError.textContent = 'You have reached your free trial limit. Please upgrade to continue generating curricula.';
+            formError.style.display = 'block';
+            return;
+        } else if (currentUsage.overageAllowed) {
+            // Premium user at limit - show overage confirmation modal
+            pendingFormData = formData;
+            document.getElementById('overageModal').style.display = 'flex';
+            return;
+        }
+    }
+
+    // Proceed with generation
+    await executeGeneration(formData);
+}
+
+// Execute the actual generation request
+async function executeGeneration(formData) {
+    const formError = document.getElementById('formError');
+    const formSuccess = document.getElementById('formSuccess');
+    const submitBtn = document.getElementById('generateBtn');
+
     // Disable button
     submitBtn.disabled = true;
     submitBtn.textContent = 'Generating...';
@@ -254,7 +406,7 @@ async function handleGenerate(e) {
 
         // Success
         formSuccess.innerHTML = `
-            ✅ Curriculum generation started!<br>
+            Curriculum generation started!<br>
             You'll receive an email with download links in 6-12 minutes.<br>
             ${data.isOverage ? `<strong>Charged $4.99 for overage generation.</strong>` : ''}
         `;
