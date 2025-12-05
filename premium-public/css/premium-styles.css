@@ -109,7 +109,26 @@ body {
 .hero-subtitle {
     font-size: 1.3rem;
     color: var(--text-gray);
-    margin-bottom: 50px;
+    margin-bottom: 40px;
+}
+
+/* Hero Pricing Grid */
+.hero-pricing {
+    max-width: 1000px;
+    margin: 0 auto 20px;
+}
+
+.hero-pricing .pricing-card {
+    padding: 30px 25px;
+}
+
+.hero-pricing .pricing-card ul {
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.hero-pricing .pricing-card ul li {
+    padding: 6px 0;
 }
 
 .pricing-card-hero {
