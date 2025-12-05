@@ -67,6 +67,42 @@ body {
     padding: var(--spacing-xl) var(--spacing-lg);
     text-align: center;
     border-bottom: 3px solid var(--navy);
+    position: relative;
+}
+
+/* Header Navigation - Top Right Corner */
+.header-nav {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.header-nav .nav-link {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--accent-blue);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.header-nav .nav-link:hover {
+    background: var(--off-white);
+    color: var(--navy);
+}
+
+.header-nav .nav-login {
+    background: var(--navy);
+    color: white;
+}
+
+.header-nav .nav-login:hover {
+    background: var(--accent-blue);
+    color: white;
 }
 
 .logo {
